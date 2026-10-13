@@ -1,0 +1,147 @@
+[
+  {
+    "model": "accounts.regiaofiscal",
+    "pk": 1,
+    "fields": { "codigo": 1, "nome": "1ª Região Fiscal - DF, GO, MT, MS, TO", "uf": "DF/GO/MT/MS/TO" }
+  },
+  {
+    "model": "accounts.regiaofiscal",
+    "pk": 2,
+    "fields": { "codigo": 2, "nome": "2ª Região Fiscal - AC, AM, AP, PA, RO, RR", "uf": "AC/AM/AP/PA/RO/RR" }
+  },
+  {
+    "model": "accounts.regiaofiscal",
+    "pk": 3,
+    "fields": { "codigo": 3, "nome": "3ª Região Fiscal - CE, MA, PI", "uf": "CE/MA/PI" }
+  },
+  {
+    "model": "accounts.regiaofiscal",
+    "pk": 4,
+    "fields": { "codigo": 4, "nome": "4ª Região Fiscal - AL, PB, PE, RN", "uf": "AL/PB/PE/RN" }
+  },
+  {
+    "model": "accounts.regiaofiscal",
+    "pk": 5,
+    "fields": { "codigo": 5, "nome": "5ª Região Fiscal - BA, SE", "uf": "BA/SE" }
+  },
+  {
+    "model": "accounts.regiaofiscal",
+    "pk": 6,
+    "fields": { "codigo": 6, "nome": "6ª Região Fiscal - MG", "uf": "MG" }
+  },
+  {
+    "model": "accounts.regiaofiscal",
+    "pk": 7,
+    "fields": { "codigo": 7, "nome": "7ª Região Fiscal - ES, RJ", "uf": "ES/RJ" }
+  },
+  {
+    "model": "accounts.regiaofiscal",
+    "pk": 8,
+    "fields": { "codigo": 8, "nome": "8ª Região Fiscal - SP", "uf": "SP" }
+  },
+  {
+    "model": "accounts.regiaofiscal",
+    "pk": 9,
+    "fields": { "codigo": 9, "nome": "9ª Região Fiscal - PR, SC", "uf": "PR/SC" }
+  },
+  {
+    "model": "accounts.regiaofiscal",
+    "pk": 10,
+    "fields": { "codigo": 10, "nome": "10ª Região Fiscal - RS", "uf": "RS" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 1,
+    "fields": { "regiao_fiscal": 10, "tipo": "SRRF", "sigla": "SRRF10", "nome": "Superintendência Regional da 10ª RF", "cidade": "Porto Alegre", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 2,
+    "fields": { "regiao_fiscal": 10, "tipo": "DRF", "sigla": "DRF/POA", "nome": "Delegacia da Receita Federal em Porto Alegre", "cidade": "Porto Alegre", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 3,
+    "fields": { "regiao_fiscal": 10, "tipo": "DRF", "sigla": "DRF/CXS", "nome": "Delegacia da Receita Federal em Caxias do Sul", "cidade": "Caxias do Sul", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 4,
+    "fields": { "regiao_fiscal": 10, "tipo": "DRF", "sigla": "DRF/PFN", "nome": "Delegacia da Receita Federal em Passo Fundo", "cidade": "Passo Fundo", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 5,
+    "fields": { "regiao_fiscal": 10, "tipo": "DRF", "sigla": "DRF/PEL", "nome": "Delegacia da Receita Federal em Pelotas", "cidade": "Pelotas", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 6,
+    "fields": { "regiao_fiscal": 10, "tipo": "DRF", "sigla": "DRF/SMA", "nome": "Delegacia da Receita Federal em Santa Maria", "cidade": "Santa Maria", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 7,
+    "fields": { "regiao_fiscal": 10, "tipo": "DRF", "sigla": "DRF/SCR", "nome": "Delegacia da Receita Federal em Santa Cruz do Sul", "cidade": "Santa Cruz do Sul", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 8,
+    "fields": { "regiao_fiscal": 10, "tipo": "DRF", "sigla": "DRF/STO", "nome": "Delegacia da Receita Federal em Santo Ângelo", "cidade": "Santo Ângelo", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 9,
+    "fields": { "regiao_fiscal": 10, "tipo": "ALF", "sigla": "ALF/URG", "nome": "Alfândega da Receita Federal em Uruguaiana", "cidade": "Uruguaiana", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 10,
+    "fields": { "regiao_fiscal": 10, "tipo": "ALF", "sigla": "ALF/SCL", "nome": "Alfândega da Receita Federal em Santana do Livramento", "cidade": "Santana do Livramento", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 11,
+    "fields": { "regiao_fiscal": 10, "tipo": "ALF", "sigla": "ALF/RGO", "nome": "Alfândega da Receita Federal em Rio Grande", "cidade": "Rio Grande", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 12,
+    "fields": { "regiao_fiscal": 10, "tipo": "ALF", "sigla": "ALF/POA", "nome": "Alfândega da Receita Federal no Aeroporto Salgado Filho", "cidade": "Porto Alegre", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 13,
+    "fields": { "regiao_fiscal": 10, "tipo": "IRF", "sigla": "IRF/SBJ", "nome": "Inspetoria da Receita Federal em São Borja", "cidade": "São Borja", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 14,
+    "fields": { "regiao_fiscal": 10, "tipo": "CUF", "sigla": "CUF/SBJ", "nome": "Centro Unificado de Fronteira - Ponte Internacional", "cidade": "São Borja", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 15,
+    "fields": { "regiao_fiscal": 10, "tipo": "IRF", "sigla": "IRF/CHU", "nome": "Inspetoria da Receita Federal no Chuí", "cidade": "Chuí", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 16,
+    "fields": { "regiao_fiscal": 10, "tipo": "IRF", "sigla": "IRF/JAG", "nome": "Inspetoria da Receita Federal em Jaguarão", "cidade": "Jaguarão", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 17,
+    "fields": { "regiao_fiscal": 10, "tipo": "IRF", "sigla": "IRF/IQU", "nome": "Inspetoria da Receita Federal em Itaqui", "cidade": "Itaqui", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 18,
+    "fields": { "regiao_fiscal": 10, "tipo": "IRF", "sigla": "IRF/PSL", "nome": "Inspetoria da Receita Federal em Porto Xavier", "cidade": "Porto Xavier", "endereco": "" }
+  },
+  {
+    "model": "accounts.unidade",
+    "pk": 19,
+    "fields": { "regiao_fiscal": 10, "tipo": "IRF", "sigla": "IRF/SBO", "nome": "Inspetoria da Receita Federal em São Gabriel", "cidade": "São Gabriel", "endereco": "" }
+  }
+]
