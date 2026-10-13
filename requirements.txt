@@ -1,0 +1,13 @@
+# Django Framework
+Django>=5.0,<6.0
+
+# Variáveis de ambiente (para senhas de e-mail e dados sensíveis)
+python-dotenv
+
+# Formulários bonitos e automáticos no Django
+django-crispy-forms
+crispy-bootstrap5
+
+# Testes (mantemos o pytest para validar o fluxo de envio de e-mails/OS)
+pytest
+pytest-django
