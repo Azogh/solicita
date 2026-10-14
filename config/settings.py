@@ -147,3 +147,16 @@ LOGIN_URL = 'login'
 
 # Contato institucional do Administrador do Sistema (exibido nos alertas de validação)
 ADMIN_CONTACT_EMAIL = 'andre-gustavo.ozga@rfb.gov.br'
+
+# Configuração de E-mail para Notificações
+# Em desenvolvimento, exibe os e-mails diretamente no terminal
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Para produção no Office 365 (SMTP da Microsoft):
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.office365.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'seu-email@rfb.gov.br'
+# EMAIL_HOST_PASSWORD = 'sua-senha-ou-app-password'
+# DEFAULT_FROM_EMAIL = 'Solicita RFB <seu-email@rfb.gov.br>'
