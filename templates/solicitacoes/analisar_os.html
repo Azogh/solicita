@@ -1,106 +1,110 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
-{% block title %}Analisar OS {{ os_item.numero_os }} - Solicita{% endblock %}
+{% block title %}Análise da OS {{ os_item.numero_os }} - Solicita{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-10 col-lg-9">
-        <div class="card card-custom p-4 border-0 shadow-sm">
-            
-            <!-- Cabeçalho de Análise -->
-            <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
-                <div>
-                    <span class="badge bg-secondary mb-2">{{ os_item.unidade.sigla }} - {{ os_item.unidade.nome }}</span>
-                    <h3 class="fw-bold mb-1"><i class="fa-solid fa-microchip me-2 text-primary"></i>Análise da Ordem de Serviço</h3>
-                    <p class="text-muted mb-0 fs-5">{{ os_item.numero_os }} — {{ os_item.assunto }}</p>
-                </div>
-                <span class="badge bg-{{ os_item.cor_badge_status }} fs-6">{{ os_item.get_status_display }}</span>
-            </div>
-
-            <!-- Resumo da Demanda do Solicitante -->
-            <div class="card bg-body-tertiary border mb-4 p-3">
-                <div class="row g-3 mb-2">
-                    <div class="col-6 col-md-3">
-                        <small class="text-muted d-block fw-bold">Solicitante:</small>
-                        <span class="text-body">{{ os_item.solicitante.get_full_name }}</span>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <small class="text-muted d-block fw-bold">Prioridade:</small>
-                        <span class="badge bg-{% if os_item.prioridade == 'ALTA' %}danger{% elif os_item.prioridade == 'MEDIA' %}warning text-dark{% else %}secondary{% endif %}">
-                            {{ os_item.get_prioridade_display }}
-                        </span>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <small class="text-muted d-block fw-bold">Data da Solicitação:</small>
-                        <span class="text-body">{{ os_item.criado_em|date:"d/m/Y H:i" }}</span>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <small class="text-muted d-block fw-bold">Anexo do Solicitante:</small>
-                        {% if os_item.anexo_solicitante %}
-                            <a href="{{ os_item.anexo_solicitante.url }}" target="_blank" class="btn btn-sm btn-outline-primary py-0">
-                                <i class="fa-solid fa-paperclip me-1"></i>Ver Anexo
-                            </a>
-                        {% else %}
-                            <span class="text-muted small">Sem anexos</span>
-                        {% endif %}
-                    </div>
-                </div>
-                <hr class="my-2">
-                <div>
-                    <small class="text-muted d-block fw-bold mb-1">Descrição do Problema:</small>
-                    <p class="mb-0 text-body" style="white-space: pre-line;">{{ os_item.descricao }}</p>
-                </div>
-            </div>
-
-            <!-- Formulário de Gestão / Agendamento / Auditoria -->
-            <form method="post" novalidate>
-                {% csrf_token %}
-                
-                <h5 class="fw-bold text-primary mb-3">
-                    <i class="fa-solid fa-sliders me-2"></i>Parecer & Agendamento do Gestor
-                </h5>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        {{ form.status|as_crispy_field }}
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        {{ form.data_prevista_atendimento|as_crispy_field }}
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    {{ form.parecer_gestor|as_crispy_field }}
-                </div>
-
-                <!-- Seção de Auditoria (Caso o atendimento não ocorra conforme prazo ou seja baixado) -->
-                <div class="card border-warning-subtle bg-warning-subtle p-3 mb-4">
-                    <h6 class="fw-bold text-dark mb-2">
-                        <i class="fa-solid fa-shield-halved me-2 text-warning"></i>Registro de Auditoria / Impeditivo
-                    </h6>
-                    <small class="text-muted d-block mb-2">Preencha caso esta solicitação sofra atraso, reagendamento ou cancelamento por motivo de contrato/efetivo:</small>
-                    <div class="row">
-                        <div class="col-md-6 mb-2">
-                            {{ form.justificativa_auditoria|as_crispy_field }}
-                        </div>
-                        <div class="col-md-6 mb-2">
-                            {{ form.justificativa_detalhes|as_crispy_field }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
-                        <i class="fa-solid fa-arrow-left me-1"></i>Voltar ao Dashboard
-                    </a>
-                    <button type="submit" class="btn btn-primary btn-lg fw-bold">
-                        <i class="fa-solid fa-check me-1"></i>Salvar & Notificar Unidade
-                    </button>
-                </div>
-            </form>
-
+<div class="container-fluid py-2">
+    <!-- Cabeçalho da Análise -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <span class="badge bg-secondary mb-1">{{ os_item.unidade.sigla }} - {{ os_item.unidade.nome }}</span>
+            <h3 class="fw-bold mb-0"><i class="fa-solid fa-list-check text-primary me-2"></i>Análise da Ordem de Serviço</h3>
+            <small class="text-muted">{{ os_item.numero_os }} — {{ os_item.assunto }}</small>
         </div>
+        <div>
+            <span class="badge bg-{{ os_item.cor_badge_status }} fs-6 px-3 py-2">
+                {{ os_item.get_status_display }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Card de Detalhes da Solicitação do Solicitante -->
+    <div class="card card-custom p-4 border-0 shadow-sm mb-4">
+        <h5 class="fw-bold text-secondary mb-3 border-bottom pb-2">
+            <i class="fa-solid fa-circle-info me-2"></i>Dados da Solicitação
+        </h5>
+        
+        <div class="row g-3">
+            <div class="col-md-4">
+                <strong class="d-block text-muted small">Solicitante:</strong>
+                <span>{{ os_item.solicitante.get_full_name|default:os_item.solicitante.username }}</span>
+            </div>
+            <div class="col-md-4">
+                <strong class="d-block text-muted small">Prioridade:</strong>
+                <span class="badge bg-{% if os_item.prioridade == 'ALTA' %}danger{% elif os_item.prioridade == 'MEDIA' %}warning text-dark{% else %}secondary{% endif %}">
+                    {{ os_item.get_prioridade_display }}
+                </span>
+            </div>
+            <div class="col-md-4">
+                <strong class="d-block text-muted small">Data da Solicitação:</strong>
+                <span>{{ os_item.criado_em|date:"d/m/Y H:i" }}</span>
+            </div>
+            <div class="col-md-12">
+                <strong class="d-block text-muted small">Descrição do Problema:</strong>
+                <p class="bg-body-tertiary p-3 rounded border mb-0 text-break">{{ os_item.descricao }}</p>
+            </div>
+            <div class="col-md-12">
+                <strong class="d-block text-muted small mb-1">Anexo / Foto Comprobatória do Solicitante:</strong>
+                {% if os_item.anexo_solicitante %}
+                    <div class="p-2 border rounded bg-light d-inline-block">
+                        <a href="{{ os_item.anexo_solicitante.url }}" target="_blank" class="btn btn-sm btn-outline-primary fw-semibold">
+                            <i class="fa-solid fa-image me-1"></i>Visualizar Imagem / Documento Anexo
+                        </a>
+                    </div>
+                {% else %}
+                    <span class="text-muted small">Nenhum anexo registrado nesta solicitação.</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulário de Análise do Gestor -->
+    <div class="card card-custom p-4 border-0 shadow-sm">
+        <h5 class="fw-bold text-primary mb-3 border-bottom pb-2">
+            <i class="fa-solid fa-user-gear me-2"></i>Parecer & Agendamento do Gestor
+        </h5>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    {{ form.status|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.data_prevista_atendimento|as_crispy_field }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                {{ form.parecer_gestor|as_crispy_field }}
+            </div>
+
+            <div class="card bg-warning-subtle border-warning p-3 mb-4">
+                <h6 class="fw-bold text-dark mb-2">
+                    <i class="fa-solid fa-shield-halved me-1"></i>Registro de Auditoria / Impedimento
+                </h6>
+                <small class="text-muted d-block mb-2">Preencha caso esta solicitação sofra atraso, reagendamento ou cancelamento por motivo contratual/efetivo:</small>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        {{ form.justificativa_auditoria|as_crispy_field }}
+                    </div>
+                    <div class="col-md-8">
+                        {{ form.justificativa_detalhes|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary fw-semibold">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Voltar ao Dashboard
+                </a>
+                <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">
+                    <i class="fa-solid fa-check me-1"></i>Salvar & Notificar Unidade
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

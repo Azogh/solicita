@@ -3,10 +3,16 @@
 {% block title %}Dashboard Gestor Regional - Solicita{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- Cabeçalho do Gestor com o Botão para o Cronograma -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
-        <h3 class="fw-bold mb-0">Painel de Gestao Regional</h3>
-        <small class="text-muted">Jurisdicao: {{ user.unidades_gerenciadas.count }} reparticoes sob sua fiscalizacao</small>
+        <h3 class="fw-bold mb-0">Painel de Gestão Regional</h3>
+        <small class="text-muted">Jurisdição: <strong>{{ user.unidades_gerenciadas.count }}</strong> repartição(ões) sob sua fiscalização</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'cronograma_visitas' %}" class="btn btn-primary btn-lg fw-bold shadow-sm">
+            <i class="fa-solid fa-calendar-days me-2"></i>Cronograma de Visitas
+        </a>
     </div>
 </div>
 
@@ -47,11 +53,36 @@
     </div>
 </div>
 
-<!-- Fila de Atendimento -->
+<!-- Fila de Atendimento da Jurisdição -->
 <div class="card card-custom p-4 shadow-sm border-0">
-    <h5 class="fw-bold mb-3"><i class="fa-solid fa-layer-group me-2 text-primary"></i>Fila de Solicitacoes da Jurisdicao</h5>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h5 class="fw-bold mb-0"><i class="fa-solid fa-layer-group me-2 text-primary"></i>Fila de Solicitações da Jurisdição</h5>
+    </div>
+
+    <!-- Filtro Rápido do Gestor -->
+    <form method="get" class="row g-2 mb-3 bg-body-tertiary p-2 rounded border">
+        <div class="col-md-6">
+            <input type="text" name="busca" class="form-control form-control-sm" placeholder="Buscar por Código OS ou Assunto..." value="{{ busca_val|default:'' }}">
+        </div>
+        <div class="col-md-4">
+            <select name="status" class="form-select form-select-sm">
+                <option value="">Todos os Status</option>
+                <option value="ENVIADO" {% if status_selected == 'ENVIADO' %}selected{% endif %}>Solicitado (Pendente)</option>
+                <option value="EM_ATENDIMENTO" {% if status_selected == 'EM_ATENDIMENTO' %}selected{% endif %}>Em Atendimento / Agendado</option>
+                <option value="CONCLUIDO" {% if status_selected == 'CONCLUIDO' %}selected{% endif %}>Concluído</option>
+                <option value="BAIXADO" {% if status_selected == 'BAIXADO' %}selected{% endif %}>Baixado / Recusado</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">Filtrar</button>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm" title="Limpar">
+                <i class="fa-solid fa-xmark"></i>
+            </a>
+        </div>
+    </form>
+
     <div class="table-responsive">
-        <table class="table table-hover align-middle">
+        <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
                     <th>Código OS</th>
@@ -59,27 +90,31 @@
                     <th>Assunto</th>
                     <th>Prioridade</th>
                     <th>Status</th>
-                    <th class="text-end">Acoes</th>
+                    <th class="text-end">Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for os in solicitacoes %}
                     <tr>
-                        <td class="fw-bold">{{ os.numero_os }}</td>
+                        <td class="fw-bold text-primary">{{ os.numero_os }}</td>
                         <td><span class="badge bg-secondary">{{ os.unidade.sigla }}</span></td>
                         <td>{{ os.assunto }}</td>
-                        <td>{{ os.get_prioridade_display }}</td>
+                        <td>
+                            <span class="badge bg-{% if os.prioridade == 'ALTA' %}danger{% elif os.prioridade == 'MEDIA' %}warning text-dark{% else %}secondary{% endif %}">
+                                {{ os.get_prioridade_display }}
+                            </span>
+                        </td>
                         <td><span class="badge bg-{{ os.cor_badge_status }}">{{ os.get_status_display }}</span></td>
                         <td class="text-end">
-    <a href="{% url 'analisar_os' os.pk %}" class="btn btn-sm btn-primary fw-semibold">
-        <i class="fa-solid fa-pen-to-square me-1"></i>Analisar / Agendar
-    </a>
-</td>
+                            <a href="{% url 'analisar_os' os.pk %}" class="btn btn-sm btn-primary fw-semibold">
+                                <i class="fa-solid fa-pen-to-square me-1"></i>Analisar / Agendar
+                            </a>
+                        </td>
                     </tr>
                 {% empty %}
                     <tr>
                         <td colspan="6" class="text-center py-4 text-muted">
-                            Nenhuma solicitação pendente na sua jurisdição no momento.
+                            Nenhuma solicitação encontrada na sua jurisdição.
                         </td>
                     </tr>
                 {% endfor %}

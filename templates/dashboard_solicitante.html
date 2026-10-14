@@ -13,16 +13,16 @@
     </a>
 </div>
 
-<!-- Cards de Contador de Status -->
+<!-- Cards Sintéticos de Status -->
 <div class="row g-3 mb-4">
     <div class="col-md-4">
-        <div class="card card-custom p-3 border-start border-4 border-danger bg-body-tertiary">
+        <div class="card card-custom p-3 border-start border-4 border-secondary bg-body-tertiary">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <span class="text-muted small fw-bold">RASCUNHOS (NÃO ENVIADOS)</span>
-                    <h2 class="fw-bold text-danger mb-0">{{ rascunhos_count }}</h2>
+                    <h2 class="fw-bold text-secondary mb-0">{{ total_rascunhos|default:"0" }}</h2>
                 </div>
-                <i class="fa-solid fa-file-pen fs-1 text-danger opacity-50"></i>
+                <i class="fa-solid fa-file-pen fs-1 text-secondary opacity-50"></i>
             </div>
         </div>
     </div>
@@ -31,7 +31,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <span class="text-muted small fw-bold">EM ANDAMENTO</span>
-                    <h2 class="fw-bold text-warning mb-0">{{ em_andamento_count }}</h2>
+                    <h2 class="fw-bold text-warning mb-0">{{ total_andamento|default:"0" }}</h2>
                 </div>
                 <i class="fa-solid fa-clock-rotate-left fs-1 text-warning opacity-50"></i>
             </div>
@@ -42,7 +42,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <span class="text-muted small fw-bold">CONCLUÍDAS</span>
-                    <h2 class="fw-bold text-success mb-0">{{ concluidas_count }}</h2>
+                    <h2 class="fw-bold text-success mb-0">{{ total_concluidas|default:"0" }}</h2>
                 </div>
                 <i class="fa-solid fa-circle-check fs-1 text-success opacity-50"></i>
             </div>
@@ -50,78 +50,72 @@
     </div>
 </div>
 
-<!-- Tabela com Filtros -->
+<!-- Minhas Solicitações -->
 <div class="card card-custom p-4 shadow-sm border-0">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-        <h5 class="fw-bold mb-0"><i class="fa-solid fa-list me-2 text-primary"></i>Minhas Solicitações</h5>
-    </div>
-
-    <!-- Form de Filtro por Busca, Status e Data -->
-    <form method="get" class="row g-2 mb-4 bg-body-tertiary p-3 rounded border">
-        <div class="col-md-3">
-            <label class="form-label small fw-bold mb-1">Buscar por Assunto/Código</label>
-            <input type="text" name="busca" class="form-control form-control-sm" placeholder="Ex: OS-2026-0001, Ar-condicionado..." value="{{ busca_val|default:'' }}">
+    <h5 class="fw-bold mb-3"><i class="fa-solid fa-list-check me-2 text-primary"></i>Minhas Solicitações</h5>
+    
+    <!-- Filtros Rápido do Solicitante -->
+    <form method="get" class="row g-2 mb-3 bg-body-tertiary p-2 rounded border">
+        <div class="col-md-4">
+            <input type="text" name="busca" class="form-control form-control-sm" placeholder="Buscar por Assunto/Código..." value="{{ request.GET.busca }}">
         </div>
         <div class="col-md-3">
-            <label class="form-label small fw-bold mb-1">Status</label>
             <select name="status" class="form-select form-select-sm">
                 <option value="">Todos os Status</option>
-                {% for val, label in status_choices %}
-                    <option value="{{ val }}" {% if status_selected == val %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
+                <option value="RASCUNHO" {% if request.GET.status == 'RASCUNHO' %}selected{% endif %}>Rascunho</option>
+                <option value="ENVIADO" {% if request.GET.status == 'ENVIADO' %}selected{% endif %}>Enviado (Aguardando Analise)</option>
+                <option value="EM_ATENDIMENTO" {% if request.GET.status == 'EM_ATENDIMENTO' %}selected{% endif %}>Em Atendimento / Agendado</option>
+                <option value="CONCLUIDO" {% if request.GET.status == 'CONCLUIDO' %}selected{% endif %}>Concluído</option>
             </select>
         </div>
-        <div class="col-md-2">
-            <label class="form-label small fw-bold mb-1">Data Inicial</label>
-            <input type="date" name="data_inicio" class="form-control form-control-sm" value="{{ data_inicio_val|default:'' }}">
+        <div class="col-md-3">
+            <input type="text" name="data_inicio" class="form-control form-control-sm date-mask" placeholder="dd/mm/aaaa" value="{{ request.GET.data_inicio }}">
         </div>
-        <div class="col-md-2">
-            <label class="form-label small fw-bold mb-1">Data Final</label>
-            <input type="date" name="data_fim" class="form-control form-control-sm" value="{{ data_fim_val|default:'' }}">
-        </div>
-        <div class="col-md-2 d-flex align-items-end gap-1">
-            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
-                <i class="fa-solid fa-filter me-1"></i>Filtrar
-            </button>
-            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm" title="Limpar Filtros">
+        <div class="col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">Filtrar</button>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm" title="Limpar">
                 <i class="fa-solid fa-xmark"></i>
             </a>
         </div>
     </form>
 
     <div class="table-responsive">
-        <table class="table table-hover align-middle">
+        <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
                     <th>Código OS</th>
                     <th>Assunto</th>
                     <th>Data Criação</th>
                     <th>Status</th>
-                    <th class="text-center" style="width: 100px;">Ações</th>
+                    <th class="text-end">Ações</th>
                 </tr>
             </thead>
             <tbody>
-                {% for os in solicitacoes_recentes %}
+                {% for os in solicitacoes %}
                     <tr>
                         <td class="fw-bold text-primary">{{ os.numero_os }}</td>
                         <td>{{ os.assunto }}</td>
                         <td>{{ os.criado_em|date:"d/m/Y H:i" }}</td>
                         <td><span class="badge bg-{{ os.cor_badge_status }}">{{ os.get_status_display }}</span></td>
-                        <td class="text-center">
+                        <td class="text-end">
                             {% if os.status == 'RASCUNHO' %}
-                                <a href="{% url 'editar_os' os.pk %}" class="btn btn-sm btn-outline-warning me-1" data-bs-toggle="tooltip" title="Editar Rascunho">
-                                    <i class="fa-solid fa-pen-to-square"></i>
+                                <a href="{% url 'editar_os' os.pk %}" class="btn btn-sm btn-outline-primary fw-semibold me-1">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i>Editar Rascunho
+                                </a>
+                            {% else %}
+                                <a href="{% url 'detalhar_os' os.pk %}" class="btn btn-sm btn-light border me-1" title="Ver Detalhes">
+                                    <i class="fa-solid fa-eye text-primary"></i>
+                                </a>
+                                <a href="{% url 'criar_feedback_dmr_os' os.pk %}" class="btn btn-sm btn-outline-success" title="Feedback DMR">
+                                    <i class="fa-solid fa-comment-dots me-1"></i>Feedback
                                 </a>
                             {% endif %}
-                            <a href="{% url 'detalhar_os' os.pk %}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Visualizar Detalhes">
-                                <i class="fa-solid fa-eye"></i>
-                            </a>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
                         <td colspan="5" class="text-center py-4 text-muted">
-                            Nenhuma Ordem de Serviço encontrada com os critérios selecionados.
+                            Nenhuma solicitação encontrada para a sua unidade.
                         </td>
                     </tr>
                 {% endfor %}
@@ -129,16 +123,4 @@
         </table>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    // Inicializa os Tooltips do Bootstrap para os ícones de ação
-    document.addEventListener('DOMContentLoaded', function () {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-</script>
 {% endblock %}

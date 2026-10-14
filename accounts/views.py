@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import login, update_session_auth_hash
@@ -8,10 +9,12 @@ from .forms import SolicitanteCadastroForm, PerfilEditarForm
 from .models import Unidade, Usuario, RegiaoFiscal
 from solicitacoes.models import OrdemServico
 
+
 def landing_page_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
     return render(request, 'landing.html')
+
 
 def registro_view(request):
     if request.method == 'POST':
@@ -34,63 +37,91 @@ def registro_view(request):
         form = SolicitanteCadastroForm()
     return render(request, 'accounts/registro.html', {'form': form})
 
+
 @login_required
 def dashboard_view(request):
     user = request.user
+
+    # Rota para GESTOR
     if user.perfil == Usuario.PerfilChoices.GESTOR:
-        unidades_ids = user.unidades_gerenciadas.values_list('id', flat=True)
-        solicitacoes = OrdemServico.objects.filter(unidade_id__in=unidades_ids)
-        
-        # Filtros para o Gestor
-        status_filter = request.GET.get('status')
-        busca_filter = request.GET.get('busca')
-        
-        if status_filter:
-            solicitacoes = solicitacoes.filter(status=status_filter)
-        if busca_filter:
-            solicitacoes = solicitacoes.filter(assunto__icontains=busca_filter) | solicitacoes.filter(numero_os__icontains=busca_filter)
+        unidades_gerenciadas = user.unidades_gerenciadas.all()
+        solicitacoes = OrdemServico.objects.filter(
+            unidade__in=unidades_gerenciadas
+        ).order_by('-criado_em')
+
+        # Aplicar Filtros Rápido do Gestor
+        busca = request.GET.get('busca')
+        status_filtro = request.GET.get('status')
+
+        if busca:
+            solicitacoes = solicitacoes.filter(
+                assunto__icontains=busca
+            ) | solicitacoes.filter(
+                numero_os__icontains=busca
+            )
+
+        if status_filtro:
+            solicitacoes = solicitacoes.filter(status=status_filtro)
+
+        total_pendentes = solicitacoes.filter(status=OrdemServico.StatusChoices.ENVIADO).count()
+        total_agendadas = solicitacoes.filter(status=OrdemServico.StatusChoices.EM_ATENDIMENTO).count()
+        total_concluidas = solicitacoes.filter(status=OrdemServico.StatusChoices.CONCLUIDO).count()
 
         context = {
-            'total_pendentes': OrdemServico.objects.filter(unidade_id__in=unidades_ids, status=OrdemServico.StatusChoices.ENVIADO).count(),
-            'total_atendimento': OrdemServico.objects.filter(unidade_id__in=unidades_ids, status=OrdemServico.StatusChoices.EM_ATENDIMENTO).count(),
-            'total_concluidas': OrdemServico.objects.filter(unidade_id__in=unidades_ids, status=OrdemServico.StatusChoices.CONCLUIDO).count(),
-            'solicitacoes': solicitacoes[:15],
-            'status_selected': status_filter,
-            'busca_val': busca_filter,
+            'solicitacoes': solicitacoes,
+            'total_pendentes': total_pendentes,
+            'total_agendadas': total_agendadas,
+            'total_concluidas': total_concluidas,
         }
         return render(request, 'dashboard_gestor.html', context)
+
+    # Rota para SOLICITANTE (Mostra todas as OSs da Unidade do usuário)
     else:
-        minhas_os = OrdemServico.objects.filter(solicitante=user)
-        
-        # Filtros para o Solicitante
-        status_filter = request.GET.get('status')
-        data_inicio = request.GET.get('data_inicio')
-        data_fim = request.GET.get('data_fim')
+        if user.unidade:
+            solicitacoes = OrdemServico.objects.filter(unidade=user.unidade).order_by('-criado_em')
+        else:
+            solicitacoes = OrdemServico.objects.filter(solicitante=user).order_by('-criado_em')
+
+        # Aplicar Filtros do Solicitante
         busca = request.GET.get('busca')
+        status_filtro = request.GET.get('status')
+        data_inicio = request.GET.get('data_inicio')
 
-        os_filtradas = minhas_os
-
-        if status_filter:
-            os_filtradas = os_filtradas.filter(status=status_filter)
-        if data_inicio:
-            os_filtradas = os_filtradas.filter(criado_em__date__gte=data_inicio)
-        if data_fim:
-            os_filtradas = os_filtradas.filter(criado_em__date__lte=data_fim)
         if busca:
-            os_filtradas = os_filtradas.filter(assunto__icontains=busca) | os_filtradas.filter(numero_os__icontains=busca)
+            solicitacoes = solicitacoes.filter(
+                assunto__icontains=busca
+            ) | solicitacoes.filter(
+                numero_os__icontains=busca
+            )
+
+        if status_filtro:
+            solicitacoes = solicitacoes.filter(status=status_filtro)
+
+        if data_inicio:
+            try:
+                if '/' in data_inicio:
+                    d, m, a = data_inicio.split('/')
+                    dt_converted = f"{a}-{m}-{d}"
+                else:
+                    dt_converted = data_inicio
+                solicitacoes = solicitacoes.filter(criado_em__date>=dt_converted)
+            except ValueError:
+                pass
+
+        total_rascunhos = solicitacoes.filter(status=OrdemServico.StatusChoices.RASCUNHO).count()
+        total_andamento = solicitacoes.filter(
+            status__in=[OrdemServico.StatusChoices.ENVIADO, OrdemServico.StatusChoices.EM_ATENDIMENTO]
+        ).count()
+        total_concluidas = solicitacoes.filter(status=OrdemServico.StatusChoices.CONCLUIDO).count()
 
         context = {
-            'rascunhos_count': minhas_os.filter(status=OrdemServico.StatusChoices.RASCUNHO).count(),
-            'em_andamento_count': minhas_os.filter(status__in=[OrdemServico.StatusChoices.ENVIADO, OrdemServico.StatusChoices.EM_ATENDIMENTO]).count(),
-            'concluidas_count': minhas_os.filter(status=OrdemServico.StatusChoices.CONCLUIDO).count(),
-            'solicitacoes_recentes': os_filtradas[:15],
-            'status_choices': OrdemServico.StatusChoices.choices,
-            'status_selected': status_filter,
-            'data_inicio_val': data_inicio,
-            'data_fim_val': data_fim,
-            'busca_val': busca,
+            'solicitacoes': solicitacoes,
+            'total_rascunhos': total_rascunhos,
+            'total_andamento': total_andamento,
+            'total_concluidas': total_concluidas,
         }
         return render(request, 'dashboard_solicitante.html', context)
+
 
 @login_required
 def perfil_view(request):
@@ -109,7 +140,7 @@ def perfil_view(request):
             form_senha = PasswordChangeForm(user=request.user, data=request.POST)
             if form_senha.is_valid():
                 user = form_senha.save()
-                update_session_auth_hash(request, user)  # Mantém o usuário logado após mudar a senha
+                update_session_auth_hash(request, user)
                 messages.success(request, "Sua senha foi alterada com sucesso!")
                 return redirect('perfil')
             else:
@@ -124,6 +155,7 @@ def perfil_view(request):
         'email_suporte': email_suporte
     })
 
+
 @login_required
 def solicitar_elevacao_gestor_view(request):
     email_suporte = getattr(settings, 'ADMIN_CONTACT_EMAIL', 'andre-gustavo.ozga@rfb.gov.br')
@@ -133,10 +165,12 @@ def solicitar_elevacao_gestor_view(request):
     )
     return redirect('perfil')
 
+
 def buscar_unidades_view(request):
     regiao_id = request.GET.get('regiao_fiscal')
     unidades = Unidade.objects.filter(regiao_fiscal_id=regiao_id) if regiao_id else Unidade.objects.none()
     return render(request, 'accounts/partials/unidades_options.html', {'unidades': unidades})
+
 
 def buscar_unidades_checkbox_view(request):
     regiao_id = request.GET.get('regiao_fiscal')
