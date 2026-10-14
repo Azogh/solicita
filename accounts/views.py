@@ -62,11 +62,16 @@ def perfil_view(request):
         form = PerfilEditarForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, "Seu perfil foi atualizado com sucesso!")
+            messages.success(request, "Seu telefone/WhatsApp foi atualizado com sucesso!")
             return redirect('perfil')
     else:
         form = PerfilEditarForm(instance=request.user)
-    return render(request, 'accounts/perfil.html', {'form': form})
+    
+    email_suporte = getattr(settings, 'ADMIN_CONTACT_EMAIL', 'andre-gustavo.ozga@rfb.gov.br')
+    return render(request, 'accounts/perfil.html', {
+        'form': form,
+        'email_suporte': email_suporte
+    })
 
 @login_required
 def solicitar_elevacao_gestor_view(request):

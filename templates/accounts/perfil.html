@@ -19,37 +19,44 @@
                 </div>
             </div>
 
+            <!-- Alerta Informativo de Alteração Excepcional -->
+            <div class="alert alert-info d-flex align-items-start mb-4 shadow-sm border-info-subtle" role="alert">
+                <i class="fa-solid fa-circle-info fs-4 me-3 mt-1 text-info"></i>
+                <div class="small">
+                    <strong>Dados Cadastrais Protegidos:</strong><br>
+                    Por razões de segurança e auditoria das Ordens de Serviço, seus dados de identificação (nome, e-mail e unidade) não podem ser alterados diretamente pelo usuário.<br><br>
+                    Caso precise realizar uma <strong>alteração excepcional</strong> (alteração de nome por casamento, correção de e-mail ou mudança de lotação), entre em contato com a Administração do Sistema via Teams ou e-mail institucional: 
+                    <a href="mailto:{{ email_suporte }}" class="fw-bold text-decoration-underline">{{ email_suporte }}</a>.
+                </div>
+            </div>
+
             <!-- Dados do Usuário -->
             <form method="post" novalidate>
                 {% csrf_token %}
                 
-                <div class="alert alert-light border mb-4">
+                <div class="card bg-body-tertiary border mb-4 p-3">
                     <div class="d-flex align-items-center mb-2 text-secondary">
                         <i class="fa-solid fa-id-card me-2 fs-5"></i>
-                        <strong class="small text-uppercase">Dados de Identificação Institucional (Auditados)</strong>
+                        <strong class="small text-uppercase">Identificação Institucional</strong>
                     </div>
                     <div class="row g-2">
                         <div class="col-6">
                             <small class="text-muted d-block">Nome Completo:</small>
-                            <span class="fw-semibold text-dark">{{ user.get_full_name }}</span>
+                            <span class="fw-semibold text-body">{{ user.get_full_name }}</span>
                         </div>
                         <div class="col-6">
                             <small class="text-muted d-block">E-mail Institucional:</small>
-                            <span class="fw-semibold text-dark">{{ user.email }}</span>
+                            <span class="fw-semibold text-body">{{ user.email }}</span>
                         </div>
                         <div class="col-6 mt-2">
                             <small class="text-muted d-block">Região Fiscal / Unidade:</small>
-                            <span class="fw-semibold text-dark">{{ user.regiao_fiscal.codigo }}ª RF - {{ user.unidade.sigla }}</span>
+                            <span class="fw-semibold text-body">{{ user.regiao_fiscal.codigo }}ª RF - {{ user.unidade.sigla }}</span>
                         </div>
                         <div class="col-6 mt-2">
-                            <small class="text-muted d-block">Perfil no Sistema:</small>
-                            <span class="fw-semibold text-dark">{{ user.get_perfil_display }}</span>
+                            <small class="text-muted d-block">Perfil de Acesso:</small>
+                            <span class="fw-semibold text-body">{{ user.get_perfil_display }}</span>
                         </div>
                     </div>
-                    <hr class="my-2">
-                    <small class="text-muted fst-italic">
-                        <i class="fa-solid fa-lock me-1"></i>Para alterar nome, e-mail ou unidade de lotação, solicite ajuste ao Administrador.
-                    </small>
                 </div>
 
                 <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-user-pen me-2"></i>Informações Editáveis</h6>
@@ -65,8 +72,8 @@
 
             <hr class="my-4">
 
-            <!-- Painel de Mudança de Perfil -->
-            <div class="bg-light p-3 rounded border">
+            <!-- Painel de Elevação de Perfil -->
+            <div class="bg-body-tertiary p-3 rounded border">
                 <h6 class="fw-bold mb-1"><i class="fa-solid fa-user-shield me-2 text-primary"></i>Elevação de Perfil</h6>
                 <p class="small text-muted mb-2">Assumiu função de fiscalização e precisa alterar seu acesso para Gestor Regional?</p>
                 <a href="{% url 'solicitar_elevacao_gestor' %}" class="btn btn-outline-secondary btn-sm fw-semibold">
