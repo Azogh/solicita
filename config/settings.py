@@ -143,3 +143,7 @@ AUTH_USER_MODEL = 'accounts.Usuario'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 LOGIN_URL = 'login'
+
+
+# Contato institucional do Administrador do Sistema (exibido nos alertas de validação)
+ADMIN_CONTACT_EMAIL = 'andre-gustavo.ozga@rfb.gov.br'

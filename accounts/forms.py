@@ -7,6 +7,13 @@ class SolicitanteCadastroForm(UserCreationForm):
     last_name = forms.CharField(label="Sobrenome", max_length=150, required=True)
     email = forms.EmailField(label="E-mail Institucional", required=True)
     
+    perfil = forms.ChoiceField(
+        choices=Usuario.PerfilChoices.choices,
+        label="Perfil de Acesso",
+        initial=Usuario.PerfilChoices.SOLICITANTE,
+        widget=forms.RadioSelect(attrs={'class': 'btn-check-perfil'})
+    )
+
     regiao_fiscal = forms.ModelChoiceField(
         queryset=RegiaoFiscal.objects.all(),
         label="Região Fiscal",
@@ -20,10 +27,18 @@ class SolicitanteCadastroForm(UserCreationForm):
     )
     
     unidade = forms.ModelChoiceField(
-        queryset=Unidade.objects.none(),  # Inicia vazio até selecionar a Região Fiscal
-        label="Sua Unidade / Repartição",
+        queryset=Unidade.objects.none(),
+        label="Sua Unidade / Repartição Principal",
         empty_label="Primeiro selecione a Região Fiscal...",
         required=True
+    )
+
+    # Checkboxes organizados em vez de select box cinza
+    unidades_gerenciadas = forms.ModelMultipleChoiceField(
+        queryset=Unidade.objects.all(),
+        label="Unidades sob sua Jurisdição/Fiscalização",
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'})
     )
     
     telefone_whatsapp = forms.CharField(
@@ -35,19 +50,22 @@ class SolicitanteCadastroForm(UserCreationForm):
 
     class Meta(UserCreationForm.Meta):
         model = Usuario
-        fields = ('first_name', 'last_name', 'email', 'regiao_fiscal', 'unidade', 'telefone_whatsapp')
+        fields = ('first_name', 'last_name', 'email', 'perfil', 'regiao_fiscal', 'unidade', 'unidades_gerenciadas', 'telefone_whatsapp')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Se houver dados submetidos no POST ou formulário vinculado, popula as unidades válidas
         if 'regiao_fiscal' in self.data:
             try:
                 regiao_id = int(self.data.get('regiao_fiscal'))
-                self.fields['unidade'].queryset = Unidade.objects.filter(regiao_fiscal_id=regiao_id)
+                unidades_qs = Unidade.objects.filter(regiao_fiscal_id=regiao_id)
+                self.fields['unidade'].queryset = unidades_qs
+                self.fields['unidades_gerenciadas'].queryset = unidades_qs
             except (ValueError, TypeError):
                 pass
         elif self.instance.pk and self.instance.regiao_fiscal:
-            self.fields['unidade'].queryset = self.instance.regiao_fiscal.unidades.all()
+            unidades_qs = self.instance.regiao_fiscal.unidades.all()
+            self.fields['unidade'].queryset = unidades_qs
+            self.fields['unidades_gerenciadas'].queryset = unidades_qs
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -55,10 +73,17 @@ class SolicitanteCadastroForm(UserCreationForm):
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
         user.email = self.cleaned_data['email']
+        user.perfil = self.cleaned_data['perfil']
         user.regiao_fiscal = self.cleaned_data['regiao_fiscal']
         user.unidade = self.cleaned_data['unidade']
         user.telefone_whatsapp = self.cleaned_data['telefone_whatsapp']
-        user.perfil = Usuario.PerfilChoices.SOLICITANTE
+
+        if user.perfil == Usuario.PerfilChoices.GESTOR:
+            user.is_active = False
+
         if commit:
             user.save()
+            self.save_m2m()
+            if user.perfil == Usuario.PerfilChoices.GESTOR:
+                user.unidades_gerenciadas.set(self.cleaned_data['unidades_gerenciadas'])
         return user

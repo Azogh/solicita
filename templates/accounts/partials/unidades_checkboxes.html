@@ -1,0 +1,15 @@
+{% for unidade in unidades %}
+    <div class="col item-unidade">
+        <div class="form-check p-2 border rounded hover-bg bg-light">
+            <input class="form-check-input ms-1 me-2" type="checkbox" name="unidades_gerenciadas" value="{{ unidade.id }}" id="chk_u_{{ unidade.id }}">
+            <label class="form-check-label small fw-semibold cursor-pointer" for="chk_u_{{ unidade.id }}">
+                <span class="badge bg-secondary-subtle text-secondary me-1">{{ unidade.sigla }}</span> 
+                {{ unidade.nome }} <span class="text-muted">({{ unidade.cidade }})</span>
+            </label>
+        </div>
+    </div>
+{% empty %}
+    <div class="text-center p-3 text-muted w-100">
+        Nenhuma unidade encontrada para esta Região Fiscal.
+    </div>
+{% endfor %}

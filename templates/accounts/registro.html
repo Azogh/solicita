@@ -1,4 +1,3 @@
- 
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
@@ -6,16 +5,106 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card card-custom p-4">
-            <h3 class="text-center text-primary mb-3">
-                <i class="fa-solid fa-user-plus me-2"></i>Cadastro de Solicitante
+    <div class="col-md-9 col-lg-8">
+        <div class="card card-custom p-4 shadow-sm border-0">
+            <h3 class="text-center text-primary mb-2">
+                <i class="fa-solid fa-user-plus me-2"></i>Cadastro de Usuário
             </h3>
-            <p class="text-muted text-center mb-4">Informe seus dados e sua unidade de lotação para abrir ordens de serviço.</p>
-
+            <p class="text-muted text-center mb-4">Escolha seu perfil e preencha os dados de lotação.</p>
+            
             <form method="post" novalidate>
                 {% csrf_token %}
-                {{ form|crispy }}
+
+                <!-- Seleção do Perfil estilo Toggle/Cards -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Tipo de Conta</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="perfil" id="perfil_solicitante" value="SOLICITANTE" checked>
+                            <label class="btn btn-outline-primary w-100 p-3 text-start h-100" for="perfil_solicitante">
+                                <i class="fa-solid fa-user me-2 fs-5"></i><br>
+                                <strong>Solicitante</strong><br>
+                                <small class="text-muted">Abre chamados para sua unidade local</small>
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="perfil" id="perfil_gestor" value="GESTOR">
+                            <label class="btn btn-outline-primary w-100 p-3 text-start h-100" for="perfil_gestor">
+                                <i class="fa-solid fa-user-shield me-2 fs-5"></i><br>
+                                <strong>Gestor Regional</strong><br>
+                                <small class="text-muted">Fiscaliza e aprova OSs da jurisdição</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.first_name|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.last_name|as_crispy_field }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    {{ form.email|as_crispy_field }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.regiao_fiscal|as_crispy_field }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.unidade|as_crispy_field }}
+                </div>
+
+                <!-- Painel Exclusivo do Gestor (Exibido apenas ao marcar 'Gestor Regional') -->
+                <div id="painel-gestor" class="card bg-light border-primary-subtle p-3 mb-4 d-none">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                        <div>
+                            <h6 class="mb-0 fw-bold text-primary">
+                                <i class="fa-solid fa-layer-group me-1"></i>Quais unidades você fiscaliza/gerencia?
+                            </h6>
+                            <small class="text-muted">Selecione a Região Fiscal acima e marque as repartições sob sua responsabilidade:</small>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-outline-primary btn-sm me-1" id="btn-marcar-todas">
+                                <i class="fa-solid fa-check-double me-1"></i>Marcar Todas
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-desmarcar-todas">
+                                <i class="fa-solid fa-xmark me-1"></i>Desmarcar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Campo de Busca Dinâmica -->
+                    <div class="input-group my-2">
+                        <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                        <input type="text" id="campo-busca-unidade" class="form-control form-control-sm" placeholder="Filtrar por nome ou cidade (ex: Borja, Uruguaiana)...">
+                    </div>
+
+                    <!-- Lista de Checkboxes (Carregada via HTMX) -->
+                    <div id="container-unidades-gestor" class="row row-cols-1 row-cols-md-2 g-2 max-vh-40 overflow-auto border p-2 bg-white rounded mt-1">
+                        <div class="text-center p-3 text-muted w-100">
+                            <small><i class="fa-solid fa-arrow-up me-1"></i>Selecione a Região Fiscal para listar as unidades.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    {{ form.telefone_whatsapp|as_crispy_field }}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.password1|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.password2|as_crispy_field }}
+                    </div>
+                </div>
+
                 <div class="d-grid gap-2 mt-4">
                     <button type="submit" class="btn btn-primary btn-lg">Concluir Cadastro</button>
                 </div>
@@ -26,4 +115,80 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const radioSolicitante = document.getElementById('perfil_solicitante');
+        const radioGestor = document.getElementById('perfil_gestor');
+        const painelGestor = document.getElementById('painel-gestor');
+        const selectRegiao = document.getElementById('id_regiao_fiscal');
+        const campoBusca = document.getElementById('campo-busca-unidade');
+
+        // Função para remover acentos e converter para minúsculas
+        function normalizarTexto(texto) {
+            return texto
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase();
+        }
+
+        // Alterna a exibição do painel do gestor
+        function togglePainel() {
+            if (radioGestor.checked) {
+                painelGestor.classList.remove('d-none');
+            } else {
+                painelGestor.classList.add('d-none');
+            }
+        }
+
+        radioSolicitante.addEventListener('change', togglePainel);
+        radioGestor.addEventListener('change', togglePainel);
+        togglePainel();
+
+        // Conecta a mudança da Região Fiscal para carregar também os Checkboxes do Gestor via HTMX
+        if (selectRegiao) {
+            selectRegiao.addEventListener('change', function() {
+                const regiaoId = this.value;
+                if (regiaoId) {
+                    htmx.ajax('GET', `/accounts/buscar-unidades-checkbox/?regiao_fiscal=${regiaoId}`, '#container-unidades-gestor');
+                }
+            });
+        }
+
+        // Função de filtro na busca
+        function filtrarUnidades() {
+            const termo = normalizarTexto(campoBusca.value);
+            const itens = document.querySelectorAll('#container-unidades-gestor .item-unidade');
+            
+            itens.forEach(function (item) {
+                const texto = normalizarTexto(item.textContent);
+                if (texto.includes(termo)) {
+                    item.classList.remove('d-none');
+                } else {
+                    item.classList.add('d-none');
+                }
+            });
+        }
+
+        campoBusca.addEventListener('keyup', filtrarUnidades);
+
+        // Re-executa o filtro automaticamente quando o HTMX recarregar/inserir novos checkboxes
+        document.body.addEventListener('htmx:afterOnLoad', function (evt) {
+            if (evt.detail.target.id === 'container-unidades-gestor') {
+                filtrarUnidades();
+            }
+        });
+
+        // Botões Marcar/Desmarcar todas (considerando apenas os visíveis pelo filtro)
+        document.getElementById('btn-marcar-todas').addEventListener('click', function () {
+            document.querySelectorAll('#container-unidades-gestor .item-unidade:not(.d-none) input[type="checkbox"]').forEach(cb => cb.checked = true);
+        });
+
+        document.getElementById('btn-desmarcar-todas').addEventListener('click', function () {
+            document.querySelectorAll('#container-unidades-gestor .item-unidade:not(.d-none) input[type="checkbox"]').forEach(cb => cb.checked = false);
+        });
+    });
+</script>
 {% endblock %}

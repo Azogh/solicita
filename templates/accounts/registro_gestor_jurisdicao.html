@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Jurisdição do Gestor - Solicita{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-9 col-lg-8">
+        <div class="card card-custom p-4 shadow-sm border-0">
+            <!-- Barra de Progresso do Cadastro -->
+            <div class="progress mb-4" style="height: 6px;">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: 100%;"></div>
+            </div>
+
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-primary-subtle text-primary p-3 rounded-circle me-3">
+                    <i class="fa-solid fa-map-location-dot fs-4"></i>
+                </div>
+                <div>
+                    <h4 class="mb-0 fw-bold text-dark">Etapa 2: Definir Jurisdição de Atendimento</h4>
+                    <small class="text-muted">Selecione a Região Fiscal e as repartições sob sua responsabilidade.</small>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Seleção da Região Fiscal -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">1. Selecione a Região Fiscal Principal</label>
+                    <select name="regiao_fiscal" id="select_regiao" class="form-select form-select-lg" 
+                            hx-get="{% url 'buscar_unidades_checkbox' %}" 
+                            hx-target="#container-unidades" 
+                            hx-trigger="change">
+                        <option value="">Selecione a Região Fiscal...</option>
+                        {% for regiao in regioes %}
+                            <option value="{{ regiao.id }}">{{ regiao.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Painel de Unidades com Busca e Seleção Global -->
+                <div class="card border p-3 bg-light mb-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <label class="form-label fw-bold mb-0">2. Marque as Unidades que você gerencia:</label>
+                        <div>
+                            <button type="button" class="btn btn-outline-primary btn-sm me-1" id="btn-marcar-todas">
+                                <i class="fa-solid fa-check-double me-1"></i>Marcar Todas
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-desmarcar-todas">
+                                <i class="fa-solid fa-xmark me-1"></i>Desmarcar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Campo de Busca Dinâmica -->
+                    <div class="input-group mb-3">
+                        <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                        <input type="text" id="campo-busca" class="form-control" placeholder="Buscar por cidade ou nome da unidade (ex: Borja, Uruguaiana)...">
+                    </div>
+
+                    <!-- Lista de Checkboxes (Carregada via HTMX) -->
+                    <div id="container-unidades" class="row row-cols-1 row-cols-md-2 g-2 max-vh-50 overflow-auto border p-2 bg-white rounded">
+                        <div class="text-center p-4 text-muted w-100">
+                            <i class="fa-solid fa-arrow-up me-2"></i>Selecione a Região Fiscal acima para listar as unidades.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                        <i class="fa-solid fa-paper-plane me-2"></i>Finalizar Solicitação de Cadastro
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Busca Dinâmica em Tempo Real
+        document.addEventListener('keyup', function (e) {
+            if (e.target && e.target.id === 'campo-busca') {
+                const termo = e.target.value.toLowerCase();
+                const itens = document.querySelectorAll('.item-unidade');
+                
+                itens.forEach(function (item) {
+                    const texto = item.textContent.toLowerCase();
+                    if (texto.includes(termo)) {
+                        item.classList.remove('d-none');
+                    } else {
+                        item.classList.add('d-none');
+                    }
+                });
+            }
+        });
+
+        // Marcar / Desmarcar Todas
+        document.getElementById('btn-marcar-todas').addEventListener('click', function () {
+            document.querySelectorAll('.item-unidade input[type="checkbox"]').forEach(cb => cb.checked = true);
+        });
+
+        document.getElementById('btn-desmarcar-todas').addEventListener('click', function () {
+            document.querySelectorAll('.item-unidade input[type="checkbox"]').forEach(cb => cb.checked = false);
+        });
+    });
+</script>
+{% endblock %}

@@ -15,10 +15,11 @@ class UnidadeAdmin(admin.ModelAdmin):
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
-        ('Informações de Lotação (Solicita)', {'fields': ('regiao_fiscal', 'unidade', 'telefone_whatsapp', 'perfil')}),
+        ('Informações de Lotação (Solicita)', {'fields': ('regiao_fiscal', 'unidade', 'unidades_gerenciadas', 'telefone_whatsapp', 'perfil')}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Informações de Lotação (Solicita)', {'fields': ('regiao_fiscal', 'unidade', 'telefone_whatsapp', 'perfil')}),
+        ('Informações de Lotação (Solicita)', {'fields': ('regiao_fiscal', 'unidade', 'unidades_gerenciadas', 'telefone_whatsapp', 'perfil')}),
     )
-    list_display = ('username', 'first_name', 'last_name', 'regiao_fiscal', 'unidade', 'perfil', 'is_staff')
-    list_filter = ('regiao_fiscal', 'perfil', 'unidade')
+    list_display = ('username', 'first_name', 'last_name', 'regiao_fiscal', 'unidade', 'perfil', 'is_active', 'is_staff')
+    list_filter = ('perfil', 'regiao_fiscal', 'is_active', 'unidade')
+    filter_horizontal = ('unidades_gerenciadas',)
