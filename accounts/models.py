@@ -47,8 +47,8 @@ class Unidade(models.Model):
 
 class Usuario(AbstractUser):
     class PerfilChoices(models.TextChoices):
-        SOLICITANTE = 'SOLICITANTE', 'Solicitante (Unidade/Local)'
-        GESTOR = 'GESTOR', 'Gestor Regional (Fiscal/Coordenador)'
+        SOLICITANTE = 'SOLICITANTE', 'Solicitante (Unidade)'
+        GESTOR = 'GESTOR', 'Gestor Regional'
 
     regiao_fiscal = models.ForeignKey(
         RegiaoFiscal, 
@@ -57,20 +57,31 @@ class Usuario(AbstractUser):
         blank=True, 
         verbose_name="Região Fiscal"
     )
+    
+    # Unidade principal onde ele trabalha
     unidade = models.ForeignKey(
         Unidade, 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True, 
-        verbose_name="Unidade de Lotação"
+        verbose_name="Unidade de Lotação Principal"
     )
+
+    # SE FOR GESTOR: Quais unidades da região estão sob a responsabilidade dele?
+    unidades_gerenciadas = models.ManyToManyField(
+        Unidade,
+        blank=True,
+        related_name='gestores',
+        verbose_name="Unidades sob Gestão/Fiscalização"
+    )
+
     telefone_whatsapp = models.CharField(
         max_length=20, 
         blank=True, 
         null=True, 
-        verbose_name="Celular / WhatsApp",
-        help_text="Número com DDD para contato direto"
+        verbose_name="Celular / WhatsApp"
     )
+    
     perfil = models.CharField(
         max_length=20, 
         choices=PerfilChoices.choices, 
