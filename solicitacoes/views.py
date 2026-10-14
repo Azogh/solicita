@@ -109,3 +109,55 @@ def editar_os_view(request, pk):
 def detalhar_os_view(request, pk):
     os_item = get_object_or_404(OrdemServico, pk=pk)
     return render(request, 'solicitacoes/detalhar_os.html', {'os_item': os_item})
+
+@login_required
+def analisar_os_gestor_view(request, pk):
+    os_item = get_object_or_404(OrdemServico, pk=pk)
+    
+    # Trava de segurança: apenas gestores com permissão na unidade podem analisar
+    if request.user.perfil != Usuario.PerfilChoices.GESTOR or not request.user.unidades_gerenciadas.filter(id=os_item.unidade.id).exists():
+        messages.error(request, "Você não tem permissão para analisar solicitações desta unidade.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = GestorAnaliseForm(request.POST, instance=os_item)
+        if form.is_valid():
+            os_updated = form.save(commit=False)
+            
+            # Se foi agendado para atendimento
+            if os_updated.status == OrdemServico.StatusChoices.EM_ATENDIMENTO:
+                os_updated.agendado_em = timezone.now()
+            elif os_updated.status == OrdemServico.StatusChoices.CONCLUIDO:
+                os_updated.concluido_em = timezone.now()
+
+            os_updated.save()
+
+            # Dispara notificação por e-mail para o solicitante sobre a mudança
+            if os_updated.solicitante.email:
+                try:
+                    assunto = f"[Solicita] Atualização na OS {os_updated.numero_os} - {os_updated.get_status_display()}"
+                    msg = (
+                        f"Olá, {os_updated.solicitante.first_name}!\n\n"
+                        f"Sua Ordem de Serviço foi atualizada pelo Gestor Regional:\n\n"
+                        f"• Código: {os_updated.numero_os}\n"
+                        f"• Novo Status: {os_updated.get_status_display()}\n"
+                        f"• Data Prevista de Atendimento: {os_updated.data_prevista_atendimento.strftime('%d/%m/%Y') if os_updated.data_prevista_atendimento else 'Não informada'}\n\n"
+                        f"Parecer Técnico:\n{os_updated.parecer_gestor or 'Sem observações.'}\n\n"
+                        f"Acesse o Solicita para acompanhar os detalhes."
+                    )
+                    send_mail(
+                        subject=assunto,
+                        message=msg,
+                        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'solicita@rfb.gov.br'),
+                        recipient_list=[os_updated.solicitante.email],
+                        fail_silently=True
+                    )
+                except Exception as e:
+                    print(f"Erro ao notificar solicitante: {e}")
+
+            messages.success(request, f"Ordem de Serviço {os_updated.numero_os} atualizada com sucesso!")
+            return redirect('dashboard')
+    else:
+        form = GestorAnaliseForm(instance=os_item)
+
+    return render(request, 'solicitacoes/analisar_os.html', {'form': form, 'os_item': os_item})
