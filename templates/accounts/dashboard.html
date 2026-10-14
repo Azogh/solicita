@@ -1,0 +1,16 @@
+ 
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Solicita{% endblock %}
+
+{% block content %}
+<div class="p-4 bg-white rounded shadow-sm mb-4">
+    <h2>Bem-vindo, {{ user.get_full_name|default:user.username }}!</h2>
+    <p class="text-muted">
+        Lotação: <strong>{{ user.unidade.nome|default:"Não atribuída" }}</strong> 
+        {% if user.unidade %}({{ user.unidade.sigla }}) - {{ user.unidade.cidade }}{% endif %}
+    </p>
+    <hr>
+    <p>Perfil de Acesso: <span class="badge bg-info text-dark">{{ user.get_perfil_display }}</span></p>
+</div>
+{% endblock %}

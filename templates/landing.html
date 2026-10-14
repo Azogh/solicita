@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Solicita - Sistema de Gestão de Ordens de Serviço{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="p-5 mb-4 bg-white rounded-3 shadow-sm border text-center">
+    <div class="container-fluid py-3">
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle mb-3 px-3 py-2 rounded-pill">
+            <i class="fa-solid fa-building-columns me-1"></i> Gestão Operacional & Terceirização
+        </span>
+        <h1 class="display-5 fw-bold text-dark">Sistema Solicita</h1>
+        <p class="col-md-8 fs-5 text-muted mx-auto">
+            Plataforma centralizada para abertura, acompanhamento e avaliação de Ordens de Serviço (OS) entre as unidades do órgão e a empresa prestadora de serviços.
+        </p>
+        <div class="d-sm-flex justify-content-sm-center gap-3 mt-4">
+            <a href="{% url 'registro' %}" class="btn btn-primary btn-lg px-4 gap-3 fw-semibold">
+                <i class="fa-solid fa-user-plus me-2"></i>Cadastrar Unidade / Solicitante
+            </a>
+            <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-lg px-4">
+                <i class="fa-solid fa-right-to-bracket me-2"></i>Já tenho acesso
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Recursos e Fluxo -->
+<div class="row g-4 py-3 row-cols-1 row-cols-md-3">
+    <div class="col">
+        <div class="card card-custom h-100 p-4 border-0 shadow-sm text-center">
+            <div class="fs-1 text-primary mb-3">
+                <i class="fa-solid fa-file-signature"></i>
+            </div>
+            <h4 class="fw-semibold">1. Abertura do Chamado</h4>
+            <p class="text-muted">
+                O servidor/responsável pela unidade registra a demanda informando a necessidade, prioridade e fotos do local.
+            </p>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card card-custom h-100 p-4 border-0 shadow-sm text-center">
+            <div class="fs-1 text-primary mb-3">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <h4 class="fw-semibold">2. Grade & Deslocamento</h4>
+            <p class="text-muted">
+                O Gestor Regional analisa as OSs da jurisdição, estabelece as prioridades e notifica a data exata do atendimento.
+            </p>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card card-custom h-100 p-4 border-0 shadow-sm text-center">
+            <div class="fs-1 text-primary mb-3">
+                <i class="fa-solid fa-square-poll-vertical"></i>
+            </div>
+            <h4 class="fw-semibold">3. Encerramento & DMR</h4>
+            <p class="text-muted">
+                Após a conclusão do serviço, a unidade confirma o atendimento e registra a avaliação mensal de desempenho (DMR).
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

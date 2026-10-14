@@ -1,0 +1,4 @@
+<option value="">Selecione a sua unidade...</option>
+{% for unidade in unidades %}
+    <option value="{{ unidade.id }}">{{ unidade.sigla }} - {{ unidade.nome }} ({{ unidade.cidade }})</option>
+{% endfor %}
