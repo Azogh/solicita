@@ -40,20 +40,55 @@ def dashboard_view(request):
     if user.perfil == Usuario.PerfilChoices.GESTOR:
         unidades_ids = user.unidades_gerenciadas.values_list('id', flat=True)
         solicitacoes = OrdemServico.objects.filter(unidade_id__in=unidades_ids)
+        
+        # Filtros para o Gestor
+        status_filter = request.GET.get('status')
+        busca_filter = request.GET.get('busca')
+        
+        if status_filter:
+            solicitacoes = solicitacoes.filter(status=status_filter)
+        if busca_filter:
+            solicitacoes = solicitacoes.filter(assunto__icontains=busca_filter) | solicitacoes.filter(numero_os__icontains=busca_filter)
+
         context = {
-            'total_pendentes': solicitacoes.filter(status=OrdemServico.StatusChoices.ENVIADO).count(),
-            'total_atendimento': solicitacoes.filter(status=OrdemServico.StatusChoices.EM_ATENDIMENTO).count(),
-            'total_concluidas': solicitacoes.filter(status=OrdemServico.StatusChoices.CONCLUIDO).count(),
-            'solicitacoes': solicitacoes[:10]
+            'total_pendentes': OrdemServico.objects.filter(unidade_id__in=unidades_ids, status=OrdemServico.StatusChoices.ENVIADO).count(),
+            'total_atendimento': OrdemServico.objects.filter(unidade_id__in=unidades_ids, status=OrdemServico.StatusChoices.EM_ATENDIMENTO).count(),
+            'total_concluidas': OrdemServico.objects.filter(unidade_id__in=unidades_ids, status=OrdemServico.StatusChoices.CONCLUIDO).count(),
+            'solicitacoes': solicitacoes[:15],
+            'status_selected': status_filter,
+            'busca_val': busca_filter,
         }
         return render(request, 'dashboard_gestor.html', context)
     else:
         minhas_os = OrdemServico.objects.filter(solicitante=user)
+        
+        # Filtros para o Solicitante
+        status_filter = request.GET.get('status')
+        data_inicio = request.GET.get('data_inicio')
+        data_fim = request.GET.get('data_fim')
+        busca = request.GET.get('busca')
+
+        os_filtradas = minhas_os
+
+        if status_filter:
+            os_filtradas = os_filtradas.filter(status=status_filter)
+        if data_inicio:
+            os_filtradas = os_filtradas.filter(criado_em__date__gte=data_inicio)
+        if data_fim:
+            os_filtradas = os_filtradas.filter(criado_em__date__lte=data_fim)
+        if busca:
+            os_filtradas = os_filtradas.filter(assunto__icontains=busca) | os_filtradas.filter(numero_os__icontains=busca)
+
         context = {
             'rascunhos_count': minhas_os.filter(status=OrdemServico.StatusChoices.RASCUNHO).count(),
             'em_andamento_count': minhas_os.filter(status__in=[OrdemServico.StatusChoices.ENVIADO, OrdemServico.StatusChoices.EM_ATENDIMENTO]).count(),
             'concluidas_count': minhas_os.filter(status=OrdemServico.StatusChoices.CONCLUIDO).count(),
-            'solicitacoes_recentes': minhas_os[:10]
+            'solicitacoes_recentes': os_filtradas[:15],
+            'status_choices': OrdemServico.StatusChoices.choices,
+            'status_selected': status_filter,
+            'data_inicio_val': data_inicio,
+            'data_fim_val': data_fim,
+            'busca_val': busca,
         }
         return render(request, 'dashboard_solicitante.html', context)
 

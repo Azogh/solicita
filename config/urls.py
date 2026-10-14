@@ -17,7 +17,7 @@ urlpatterns = [
     # Rotas de Ordens de Serviço
     path('os/nova/', solicitacoes_views.criar_os_view, name='criar_os'),
     path('os/<int:pk>/', solicitacoes_views.detalhar_os_view, name='detalhar_os'),
-    path('os/<int:pk>/editar/', solicitacoes_views.editar_os_view, name='editar_os_stub'), # Usaremos alias
+    path('os/<int:pk>/editar/', solicitacoes_views.editar_os_view, name='editar_os'),
     
     path('accounts/buscar-unidades/', accounts_views.buscar_unidades_view, name='buscar_unidades'),
     path('accounts/buscar-unidades-checkbox/', accounts_views.buscar_unidades_checkbox_view, name='buscar_unidades_checkbox'),

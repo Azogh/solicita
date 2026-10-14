@@ -6,14 +6,14 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h3 class="fw-bold mb-0">Painel de Soluções & Chamados</h3>
-        <small class="text-muted">Acompanhamento de Ordens de Serviço da unidade {{ user.unidade.sigla }}</small>
+        <small class="text-muted">Acompanhamento de Ordens de Serviço da unidade <strong>{{ user.unidade.sigla }}</strong></small>
     </div>
     <a href="{% url 'criar_os' %}" class="btn btn-primary btn-lg fw-bold shadow-sm">
         <i class="fa-solid fa-plus me-2"></i>Nova Solicitação (OS)
     </a>
 </div>
 
-<!-- Cards de Status -->
+<!-- Cards de Contador de Status -->
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="card card-custom p-3 border-start border-4 border-danger bg-body-tertiary">
@@ -50,35 +50,78 @@
     </div>
 </div>
 
-<!-- Tabela de Chamados Recentes -->
+<!-- Tabela com Filtros -->
 <div class="card card-custom p-4 shadow-sm border-0">
-    <h5 class="fw-bold mb-3"><i class="fa-solid fa-list me-2 text-primary"></i>Minhas Solicitações Recentes</h5>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h5 class="fw-bold mb-0"><i class="fa-solid fa-list me-2 text-primary"></i>Minhas Solicitações</h5>
+    </div>
+
+    <!-- Form de Filtro por Busca, Status e Data -->
+    <form method="get" class="row g-2 mb-4 bg-body-tertiary p-3 rounded border">
+        <div class="col-md-3">
+            <label class="form-label small fw-bold mb-1">Buscar por Assunto/Código</label>
+            <input type="text" name="busca" class="form-control form-control-sm" placeholder="Ex: OS-2026-0001, Ar-condicionado..." value="{{ busca_val|default:'' }}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-bold mb-1">Status</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">Todos os Status</option>
+                {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if status_selected == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold mb-1">Data Inicial</label>
+            <input type="date" name="data_inicio" class="form-control form-control-sm" value="{{ data_inicio_val|default:'' }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold mb-1">Data Final</label>
+            <input type="date" name="data_fim" class="form-control form-control-sm" value="{{ data_fim_val|default:'' }}">
+        </div>
+        <div class="col-md-2 d-flex align-items-end gap-1">
+            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
+                <i class="fa-solid fa-filter me-1"></i>Filtrar
+            </button>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm" title="Limpar Filtros">
+                <i class="fa-solid fa-xmark"></i>
+            </a>
+        </div>
+    </form>
+
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead class="table-light">
                 <tr>
                     <th>Código OS</th>
                     <th>Assunto</th>
-                    <th>Data Criacao</th>
+                    <th>Data Criação</th>
                     <th>Status</th>
-                    <th class="text-end">Acoes</th>
+                    <th class="text-center" style="width: 100px;">Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for os in solicitacoes_recentes %}
                     <tr>
-                        <td class="fw-bold">{{ os.numero_os }}</td>
+                        <td class="fw-bold text-primary">{{ os.numero_os }}</td>
                         <td>{{ os.assunto }}</td>
                         <td>{{ os.criado_em|date:"d/m/Y H:i" }}</td>
                         <td><span class="badge bg-{{ os.cor_badge_status }}">{{ os.get_status_display }}</span></td>
-                        <td class="text-end">
-                            <a href="{% url 'detalhar_os' os.pk %}" class="btn btn-sm btn-outline-secondary">Detalhes</a>
+                        <td class="text-center">
+                            {% if os.status == 'RASCUNHO' %}
+                                <a href="{% url 'editar_os' os.pk %}" class="btn btn-sm btn-outline-warning me-1" data-bs-toggle="tooltip" title="Editar Rascunho">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'detalhar_os' os.pk %}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Visualizar Detalhes">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
                         <td colspan="5" class="text-center py-4 text-muted">
-                            Nenhuma Ordem de Servico registrada ainda. Clique em "Nova Solicitacao" acima para iniciar.
+                            Nenhuma Ordem de Serviço encontrada com os critérios selecionados.
                         </td>
                     </tr>
                 {% endfor %}
@@ -86,4 +129,16 @@
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Inicializa os Tooltips do Bootstrap para os ícones de ação
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 {% endblock %}
