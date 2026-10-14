@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from .forms import SolicitanteCadastroForm, PerfilEditarForm
@@ -58,18 +59,33 @@ def dashboard_view(request):
 
 @login_required
 def perfil_view(request):
-    if request.method == 'POST':
-        form = PerfilEditarForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Seu telefone/WhatsApp foi atualizado com sucesso!")
-            return redirect('perfil')
-    else:
-        form = PerfilEditarForm(instance=request.user)
-    
     email_suporte = getattr(settings, 'ADMIN_CONTACT_EMAIL', 'andre-gustavo.ozga@rfb.gov.br')
+    
+    if request.method == 'POST':
+        if 'btn_salvar_perfil' in request.POST:
+            form_perfil = PerfilEditarForm(request.POST, instance=request.user)
+            form_senha = PasswordChangeForm(user=request.user)
+            if form_perfil.is_valid():
+                form_perfil.save()
+                messages.success(request, "Seu telefone/WhatsApp foi atualizado com sucesso!")
+                return redirect('perfil')
+        elif 'btn_alterar_senha' in request.POST:
+            form_perfil = PerfilEditarForm(instance=request.user)
+            form_senha = PasswordChangeForm(user=request.user, data=request.POST)
+            if form_senha.is_valid():
+                user = form_senha.save()
+                update_session_auth_hash(request, user)  # Mantém o usuário logado após mudar a senha
+                messages.success(request, "Sua senha foi alterada com sucesso!")
+                return redirect('perfil')
+            else:
+                messages.error(request, "Por favor, corrija os erros no formulário de senha abaixo.")
+    else:
+        form_perfil = PerfilEditarForm(instance=request.user)
+        form_senha = PasswordChangeForm(user=request.user)
+
     return render(request, 'accounts/perfil.html', {
-        'form': form,
+        'form': form_perfil,
+        'form_senha': form_senha,
         'email_suporte': email_suporte
     })
 

@@ -30,45 +30,68 @@
                 </div>
             </div>
 
-            <!-- Dados do Usuário -->
-            <form method="post" novalidate>
-                {% csrf_token %}
-                
-                <div class="card bg-body-tertiary border mb-4 p-3">
-                    <div class="d-flex align-items-center mb-2 text-secondary">
-                        <i class="fa-solid fa-id-card me-2 fs-5"></i>
-                        <strong class="small text-uppercase">Identificação Institucional</strong>
+            <!-- Dados de Identificação -->
+            <div class="card bg-body-tertiary border mb-4 p-3">
+                <div class="d-flex align-items-center mb-2 text-secondary">
+                    <i class="fa-solid fa-id-card me-2 fs-5"></i>
+                    <strong class="small text-uppercase">Identificação Institucional</strong>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <small class="text-muted d-block">Nome Completo:</small>
+                        <span class="fw-semibold text-body">{{ user.get_full_name }}</span>
                     </div>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <small class="text-muted d-block">Nome Completo:</small>
-                            <span class="fw-semibold text-body">{{ user.get_full_name }}</span>
-                        </div>
-                        <div class="col-6">
-                            <small class="text-muted d-block">E-mail Institucional:</small>
-                            <span class="fw-semibold text-body">{{ user.email }}</span>
-                        </div>
-                        <div class="col-6 mt-2">
-                            <small class="text-muted d-block">Região Fiscal / Unidade:</small>
-                            <span class="fw-semibold text-body">{{ user.regiao_fiscal.codigo }}ª RF - {{ user.unidade.sigla }}</span>
-                        </div>
-                        <div class="col-6 mt-2">
-                            <small class="text-muted d-block">Perfil de Acesso:</small>
-                            <span class="fw-semibold text-body">{{ user.get_perfil_display }}</span>
-                        </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">E-mail Institucional:</small>
+                        <span class="fw-semibold text-body">{{ user.email }}</span>
+                    </div>
+                    <div class="col-6 mt-2">
+                        <small class="text-muted d-block">Região Fiscal / Unidade:</small>
+                        <span class="fw-semibold text-body">{{ user.regiao_fiscal.codigo }}ª RF - {{ user.unidade.sigla }}</span>
+                    </div>
+                    <div class="col-6 mt-2">
+                        <small class="text-muted d-block">Perfil de Acesso:</small>
+                        <span class="fw-semibold text-body">{{ user.get_perfil_display }}</span>
                     </div>
                 </div>
+            </div>
 
-                <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-user-pen me-2"></i>Informações Editáveis</h6>
-
+            <!-- Informações Editáveis (Telefone/WhatsApp) -->
+            <form method="post" class="mb-4" novalidate>
+                {% csrf_token %}
+                <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-phone me-2"></i>Contato / WhatsApp</h6>
+                
                 <div class="mb-3">
                     {{ form.telefone_whatsapp|as_crispy_field }}
                 </div>
 
-                <div class="d-grid gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary fw-bold">Salvar Telefone / WhatsApp</button>
+                <div class="d-grid gap-2">
+                    <button type="submit" name="btn_salvar_perfil" class="btn btn-primary fw-bold">
+                        <i class="fa-solid fa-floppy-disk me-1"></i>Salvar Telefone / WhatsApp
+                    </button>
                 </div>
             </form>
+
+            <hr class="my-4">
+
+            <!-- Bloco de Alteração de Senha -->
+            <div class="card border-0 bg-body-tertiary p-3 mb-4">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fa-solid fa-key text-primary fs-5 me-2"></i>
+                    <h6 class="fw-bold mb-0 text-primary">Alterar Senha de Acesso</h6>
+                </div>
+                <p class="small text-muted mb-3">Sua nova senha deve ter no mínimo 8 caracteres.</p>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {{ form_senha|crispy }}
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" name="btn_alterar_senha" class="btn btn-outline-primary fw-bold">
+                            <i class="fa-solid fa-lock me-1"></i>Atualizar Minha Senha
+                        </button>
+                    </div>
+                </form>
+            </div>
 
             <hr class="my-4">
 
