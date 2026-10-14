@@ -8,8 +8,8 @@
         <h3 class="fw-bold mb-0">Painel de Soluções & Chamados</h3>
         <small class="text-muted">Acompanhamento de Ordens de Serviço da unidade {{ user.unidade.sigla }}</small>
     </div>
-    <a href="#" class="btn btn-primary btn-lg fw-bold shadow-sm">
-        <i class="fa-solid fa-plus me-2"></i>Nova Solicitacao (OS)
+    <a href="{% url 'criar_os' %}" class="btn btn-primary btn-lg fw-bold shadow-sm">
+        <i class="fa-solid fa-plus me-2"></i>Nova Solicitação (OS)
     </a>
 </div>
 
@@ -72,7 +72,7 @@
                         <td>{{ os.criado_em|date:"d/m/Y H:i" }}</td>
                         <td><span class="badge bg-{{ os.cor_badge_status }}">{{ os.get_status_display }}</span></td>
                         <td class="text-end">
-                            <a href="#" class="btn btn-sm btn-outline-secondary">Detalhes</a>
+                            <a href="{% url 'detalhar_os' os.pk %}" class="btn btn-sm btn-outline-secondary">Detalhes</a>
                         </td>
                     </tr>
                 {% empty %}
