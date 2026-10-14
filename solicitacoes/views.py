@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import OrdemServico
-from .forms import OrdemServicoForm
+from .forms import OrdemServicoForm, GestorAnaliseForm
 from accounts.models import Usuario
 
 def notificar_gestores_por_email(os_item, request):

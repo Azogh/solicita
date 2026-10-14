@@ -71,8 +71,10 @@
                         <td>{{ os.get_prioridade_display }}</td>
                         <td><span class="badge bg-{{ os.cor_badge_status }}">{{ os.get_status_display }}</span></td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-primary">Analisar</button>
-                        </td>
+    <a href="{% url 'analisar_os' os.pk %}" class="btn btn-sm btn-primary fw-semibold">
+        <i class="fa-solid fa-pen-to-square me-1"></i>Analisar / Agendar
+    </a>
+</td>
                     </tr>
                 {% empty %}
                     <tr>
