@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Solicitante - Solicita{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0">Painel de Soluções & Chamados</h3>
+        <small class="text-muted">Acompanhamento de Ordens de Serviço da unidade {{ user.unidade.sigla }}</small>
+    </div>
+    <a href="#" class="btn btn-primary btn-lg fw-bold shadow-sm">
+        <i class="fa-solid fa-plus me-2"></i>Nova Solicitacao (OS)
+    </a>
+</div>
+
+<!-- Cards de Status -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card card-custom p-3 border-start border-4 border-danger bg-body-tertiary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-bold">RASCUNHOS (NÃO ENVIADOS)</span>
+                    <h2 class="fw-bold text-danger mb-0">{{ rascunhos_count }}</h2>
+                </div>
+                <i class="fa-solid fa-file-pen fs-1 text-danger opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-custom p-3 border-start border-4 border-warning bg-body-tertiary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-bold">EM ANDAMENTO</span>
+                    <h2 class="fw-bold text-warning mb-0">{{ em_andamento_count }}</h2>
+                </div>
+                <i class="fa-solid fa-clock-rotate-left fs-1 text-warning opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-custom p-3 border-start border-4 border-success bg-body-tertiary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-bold">CONCLUÍDAS</span>
+                    <h2 class="fw-bold text-success mb-0">{{ concluidas_count }}</h2>
+                </div>
+                <i class="fa-solid fa-circle-check fs-1 text-success opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Chamados Recentes -->
+<div class="card card-custom p-4 shadow-sm border-0">
+    <h5 class="fw-bold mb-3"><i class="fa-solid fa-list me-2 text-primary"></i>Minhas Solicitações Recentes</h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Código OS</th>
+                    <th>Assunto</th>
+                    <th>Data Criacao</th>
+                    <th>Status</th>
+                    <th class="text-end">Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for os in solicitacoes_recentes %}
+                    <tr>
+                        <td class="fw-bold">{{ os.numero_os }}</td>
+                        <td>{{ os.assunto }}</td>
+                        <td>{{ os.criado_em|date:"d/m/Y H:i" }}</td>
+                        <td><span class="badge bg-{{ os.cor_badge_status }}">{{ os.get_status_display }}</span></td>
+                        <td class="text-end">
+                            <a href="#" class="btn btn-sm btn-outline-secondary">Detalhes</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            Nenhuma Ordem de Servico registrada ainda. Clique em "Nova Solicitacao" acima para iniciar.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

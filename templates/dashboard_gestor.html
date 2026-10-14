@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Gestor Regional - Solicita{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0">Painel de Gestao Regional</h3>
+        <small class="text-muted">Jurisdicao: {{ user.unidades_gerenciadas.count }} reparticoes sob sua fiscalizacao</small>
+    </div>
+</div>
+
+<!-- Cards de Status da Jurisdição -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card card-custom p-3 border-start border-4 border-warning bg-body-tertiary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-bold">PENDENTES DE AVALIAÇÃO</span>
+                    <h2 class="fw-bold text-warning mb-0">{{ total_pendentes }}</h2>
+                </div>
+                <i class="fa-solid fa-inbox fs-1 text-warning opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-custom p-3 border-start border-4 border-info bg-body-tertiary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-bold">AGENDADAS / ATENDIMENTO</span>
+                    <h2 class="fw-bold text-info mb-0">{{ total_atendimento }}</h2>
+                </div>
+                <i class="fa-solid fa-truck-fast fs-1 text-info opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-custom p-3 border-start border-4 border-success bg-body-tertiary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-bold">CONCLUÍDAS</span>
+                    <h2 class="fw-bold text-success mb-0">{{ total_concluidas }}</h2>
+                </div>
+                <i class="fa-solid fa-square-check fs-1 text-success opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fila de Atendimento -->
+<div class="card card-custom p-4 shadow-sm border-0">
+    <h5 class="fw-bold mb-3"><i class="fa-solid fa-layer-group me-2 text-primary"></i>Fila de Solicitacoes da Jurisdicao</h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Código OS</th>
+                    <th>Unidade</th>
+                    <th>Assunto</th>
+                    <th>Prioridade</th>
+                    <th>Status</th>
+                    <th class="text-end">Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for os in solicitacoes %}
+                    <tr>
+                        <td class="fw-bold">{{ os.numero_os }}</td>
+                        <td><span class="badge bg-secondary">{{ os.unidade.sigla }}</span></td>
+                        <td>{{ os.assunto }}</td>
+                        <td>{{ os.get_prioridade_display }}</td>
+                        <td><span class="badge bg-{{ os.cor_badge_status }}">{{ os.get_status_display }}</span></td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-primary">Analisar</button>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            Nenhuma solicitação pendente na sua jurisdição no momento.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -3,8 +3,9 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
-from .forms import SolicitanteCadastroForm
+from .forms import SolicitanteCadastroForm, PerfilEditarForm
 from .models import Unidade, Usuario, RegiaoFiscal
+from solicitacoes.models import OrdemServico
 
 def landing_page_view(request):
     if request.user.is_authenticated:
@@ -17,7 +18,7 @@ def registro_view(request):
         if form.is_valid():
             user = form.save()
             if user.perfil == Usuario.PerfilChoices.GESTOR:
-                email_suporte = getattr(settings, 'ADMIN_CONTACT_EMAIL', 'suporte.solicita@rfb.gov.br')
+                email_suporte = getattr(settings, 'ADMIN_CONTACT_EMAIL', 'andre-gustavo.ozga@rfb.gov.br')
                 messages.warning(
                     request, 
                     f"Cadastro de Gestor realizado com sucesso! Sua conta está aguardando validação do administrador. "
@@ -35,22 +36,16 @@ def registro_view(request):
 @login_required
 def dashboard_view(request):
     user = request.user
-    
-    # Visão do Gestor Regional
     if user.perfil == Usuario.PerfilChoices.GESTOR:
-        # Busca OSs das unidades sob a jurisdição do gestor
         unidades_ids = user.unidades_gerenciadas.values_list('id', flat=True)
-        solicitacoes_pendentes = OrdemServico.objects.filter(unidade_id__in=unidades_ids, status=OrdemServico.StatusChoices.ENVIADO)
-        solicitacoes_atendimento = OrdemServico.objects.filter(unidade_id__in=unidades_ids, status=OrdemServico.StatusChoices.EM_ATENDIMENTO)
-        
+        solicitacoes = OrdemServico.objects.filter(unidade_id__in=unidades_ids)
         context = {
-            'total_pendentes': solicitacoes_pendentes.count(),
-            'total_atendimento': solicitacoes_atendimento.count(),
-            'solicitacoes': OrdemServico.objects.filter(unidade_id__in=unidades_ids)[:10]
+            'total_pendentes': solicitacoes.filter(status=OrdemServico.StatusChoices.ENVIADO).count(),
+            'total_atendimento': solicitacoes.filter(status=OrdemServico.StatusChoices.EM_ATENDIMENTO).count(),
+            'total_concluidas': solicitacoes.filter(status=OrdemServico.StatusChoices.CONCLUIDO).count(),
+            'solicitacoes': solicitacoes[:10]
         }
         return render(request, 'dashboard_gestor.html', context)
-    
-    # Visão do Solicitante (Unidade Local)
     else:
         minhas_os = OrdemServico.objects.filter(solicitante=user)
         context = {
@@ -60,7 +55,28 @@ def dashboard_view(request):
             'solicitacoes_recentes': minhas_os[:10]
         }
         return render(request, 'dashboard_solicitante.html', context)
-        
+
+@login_required
+def perfil_view(request):
+    if request.method == 'POST':
+        form = PerfilEditarForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Seu perfil foi atualizado com sucesso!")
+            return redirect('perfil')
+    else:
+        form = PerfilEditarForm(instance=request.user)
+    return render(request, 'accounts/perfil.html', {'form': form})
+
+@login_required
+def solicitar_elevacao_gestor_view(request):
+    email_suporte = getattr(settings, 'ADMIN_CONTACT_EMAIL', 'andre-gustavo.ozga@rfb.gov.br')
+    messages.info(
+        request, 
+        f"Sua solicitação de alteração para Gestor foi registrada. Por favor, envie uma mensagem no Teams ou e-mail para {email_suporte} para homologação."
+    )
+    return redirect('perfil')
+
 def buscar_unidades_view(request):
     regiao_id = request.GET.get('regiao_fiscal')
     unidades = Unidade.objects.filter(regiao_fiscal_id=regiao_id) if regiao_id else Unidade.objects.none()

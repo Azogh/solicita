@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Meu Perfil - Solicita{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card card-custom p-4 border-0 shadow-sm">
+            <!-- Cabeçalho do Perfil -->
+            <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                <div class="avatar-circle me-3 fs-3" style="width: 54px; height: 54px;">
+                    {{ user.first_name|default:user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <h4 class="mb-0 fw-bold">{{ user.get_full_name|default:user.username }}</h4>
+                    <span class="badge bg-primary-subtle text-primary">{{ user.get_perfil_display }}</span>
+                    <small class="text-muted ms-1">({{ user.unidade.sigla|default:"Sem Unidade" }})</small>
+                </div>
+            </div>
+
+            <!-- Dados do Usuário -->
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="alert alert-light border mb-4">
+                    <div class="d-flex align-items-center mb-2 text-secondary">
+                        <i class="fa-solid fa-id-card me-2 fs-5"></i>
+                        <strong class="small text-uppercase">Dados de Identificação Institucional (Auditados)</strong>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Nome Completo:</small>
+                            <span class="fw-semibold text-dark">{{ user.get_full_name }}</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">E-mail Institucional:</small>
+                            <span class="fw-semibold text-dark">{{ user.email }}</span>
+                        </div>
+                        <div class="col-6 mt-2">
+                            <small class="text-muted d-block">Região Fiscal / Unidade:</small>
+                            <span class="fw-semibold text-dark">{{ user.regiao_fiscal.codigo }}ª RF - {{ user.unidade.sigla }}</span>
+                        </div>
+                        <div class="col-6 mt-2">
+                            <small class="text-muted d-block">Perfil no Sistema:</small>
+                            <span class="fw-semibold text-dark">{{ user.get_perfil_display }}</span>
+                        </div>
+                    </div>
+                    <hr class="my-2">
+                    <small class="text-muted fst-italic">
+                        <i class="fa-solid fa-lock me-1"></i>Para alterar nome, e-mail ou unidade de lotação, solicite ajuste ao Administrador.
+                    </small>
+                </div>
+
+                <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-user-pen me-2"></i>Informações Editáveis</h6>
+
+                <div class="mb-3">
+                    {{ form.telefone_whatsapp|as_crispy_field }}
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary fw-bold">Salvar Telefone / WhatsApp</button>
+                </div>
+            </form>
+
+            <hr class="my-4">
+
+            <!-- Painel de Mudança de Perfil -->
+            <div class="bg-light p-3 rounded border">
+                <h6 class="fw-bold mb-1"><i class="fa-solid fa-user-shield me-2 text-primary"></i>Elevação de Perfil</h6>
+                <p class="small text-muted mb-2">Assumiu função de fiscalização e precisa alterar seu acesso para Gestor Regional?</p>
+                <a href="{% url 'solicitar_elevacao_gestor' %}" class="btn btn-outline-secondary btn-sm fw-semibold">
+                    Solicitar Habilitação de Gestor
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

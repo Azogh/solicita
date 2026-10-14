@@ -33,7 +33,6 @@ class SolicitanteCadastroForm(UserCreationForm):
         required=True
     )
 
-    # Checkboxes organizados em vez de select box cinza
     unidades_gerenciadas = forms.ModelMultipleChoiceField(
         queryset=Unidade.objects.all(),
         label="Unidades sob sua Jurisdição/Fiscalização",
@@ -87,3 +86,23 @@ class SolicitanteCadastroForm(UserCreationForm):
             if user.perfil == Usuario.PerfilChoices.GESTOR:
                 user.unidades_gerenciadas.set(self.cleaned_data['unidades_gerenciadas'])
         return user
+
+
+class PerfilEditarForm(forms.ModelForm):
+    first_name = forms.CharField(label="Nome", required=False, widget=forms.TextInput(attrs={'readonly': 'readonly', 'class': 'form-control-plaintext fw-bold'}))
+    last_name = forms.CharField(label="Sobrenome", required=False, widget=forms.TextInput(attrs={'readonly': 'readonly', 'class': 'form-control-plaintext fw-bold'}))
+    email = forms.EmailField(label="E-mail Institucional", required=False, widget=forms.EmailInput(attrs={'readonly': 'readonly', 'class': 'form-control-plaintext fw-bold'}))
+    telefone_whatsapp = forms.CharField(label="Celular / WhatsApp", max_length=20, required=False)
+
+    class Meta:
+        model = Usuario
+        fields = ('first_name', 'last_name', 'email', 'telefone_whatsapp')
+
+    def clean_first_name(self):
+        return self.instance.first_name  # Garante que o valor no banco não muda no POST
+
+    def clean_last_name(self):
+        return self.instance.last_name
+
+    def clean_email(self):
+        return self.instance.email
