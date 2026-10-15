@@ -5,8 +5,8 @@ from django.contrib import messages
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
-from .models import OrdemServico, FeedbackDMR
-from .forms import OrdemServicoForm, GestorAnaliseForm, FeedbackDMRForm
+from .models import OrdemServico, FeedbackDMR, RelatorioDMRMensal
+from .forms import OrdemServicoForm, GestorAnaliseForm, FeedbackDMRForm, RelatorioDMRMensalForm
 from accounts.models import Usuario
 
 
@@ -148,7 +148,8 @@ def analisar_os_gestor_view(request, pk):
                         f"Sua Ordem de Serviço foi atualizada pelo Gestor Regional:\n\n"
                         f"• Código: {os_updated.numero_os}\n"
                         f"• Novo Status: {os_updated.get_status_display()}\n"
-                        f"• Data Prevista de Atendimento: {os_updated.data_prevista_atendimento.strftime('%d/%m/%Y') if os_updated.data_prevista_atendimento else 'Não informada'}\n\n"
+                        f"• Data Prevista de Atendimento: {os_updated.data_prevista_atendimento.strftime('%d/%m/%Y') if os_updated.data_prevista_atendimento else 'Não informada'}\n"
+                        f"• Responsável/Preposto: {os_updated.tecnicos_escalados or 'Cristian'}\n\n"
                         f"Parecer Técnico:\n{os_updated.parecer_gestor or 'Sem observações.'}\n\n"
                         f"Acesse o Solicita para acompanhar os detalhes."
                     )
@@ -182,6 +183,7 @@ def cronograma_visitas_view(request):
     if request.method == 'POST' and 'btn_alocar' in request.POST:
         os_id = request.POST.get('os_id')
         data_agendada_raw = request.POST.get('data_prevista')
+        tecnicos = request.POST.get('tecnicos_escalados', 'Cristian')
         
         if os_id and data_agendada_raw:
             try:
@@ -193,6 +195,7 @@ def cronograma_visitas_view(request):
 
                 os_target = get_object_or_404(OrdemServico, pk=os_id, unidade_id__in=unidades_ids)
                 os_target.data_prevista_atendimento = data_agendada
+                os_target.tecnicos_escalados = tecnicos or 'Cristian'
                 os_target.status = OrdemServico.StatusChoices.EM_ATENDIMENTO
                 os_target.agendado_em = timezone.now()
                 os_target.save()
@@ -216,17 +219,32 @@ def cronograma_visitas_view(request):
 
     hoje = date.today()
     dias_grade = []
+    
+    peso_prioridade = {'URGENTISSIMO': 4, 'URGENTE': 3, 'NORMAL': 2, 'BAIXA': 1}
+    mapa_prioridade_display = {'URGENTISSIMO': 'Urgentíssimo', 'URGENTE': 'Urgente', 'NORMAL': 'Normal', 'BAIXA': 'Baixa'}
+
     for i in range(14):
         dia_corrente = hoje + timedelta(days=i)
         if dia_corrente.weekday() < 5:
             os_no_dia = os_agendadas.filter(data_prevista_atendimento=dia_corrente)
+            
+            prioridade_mais_alta = "Nenhuma"
+            maior_peso = 0
+            for item in os_no_dia:
+                peso = peso_prioridade.get(item.prioridade, 0)
+                if peso > maior_peso:
+                    maior_peso = peso
+                    prioridade_mais_alta = mapa_prioridade_display.get(item.prioridade, 'Normal')
+
             dias_grade.append({
                 'data': dia_corrente,
                 'dia_semana': dia_corrente.strftime('%A'),
-                'os_list': os_no_dia
+                'os_list': os_no_dia,
+                'total_os': os_no_dia.count(),
+                'prioridade_maxima': prioridade_mais_alta
             })
 
-    tem_urgente_pendente = os_pendentes.filter(prioridade=OrdemServico.PrioridadeChoices.ALTA).exists()
+    tem_urgente_pendente = os_pendentes.filter(prioridade__in=['URGENTE', 'URGENTISSIMO']).exists()
 
     context = {
         'os_pendentes': os_pendentes,
@@ -252,7 +270,7 @@ def criar_feedback_dmr_view(request, os_id=None):
                 feedback.ordem_servico = os_item
             feedback.save()
             
-            messages.success(request, "Feedback de DMR registrado com sucesso!")
+            messages.success(request, "Feedback registrado com sucesso!")
             return redirect('dashboard')
     else:
         initial_data = {}
@@ -273,8 +291,100 @@ def listar_feedbacks_dmr_view(request):
         return redirect('dashboard')
 
     unidades_ids = request.user.unidades_gerenciadas.values_list('id', flat=True)
-    feedbacks = FeedbackDMR.objects.filter(unidade_id__in=unidades_ids)
+    feedbacks = FeedbackDMR.objects.filter(unidade_id__in=unidades_ids).order_by('-criado_em')
 
     return render(request, 'solicitacoes/listar_feedbacks_dmr.html', {
         'feedbacks': feedbacks
     })
+
+
+@login_required
+def criar_relatorio_dmr_mensal_view(request):
+    user = request.user
+    if not user.unidade:
+        messages.error(request, "Usuário não possui unidade vinculada para emissão do DMR.")
+        return redirect('dashboard')
+
+    hoje = date.today()
+    mes_ref = hoje.month
+    ano_ref = hoje.year
+
+    os_do_mes = OrdemServico.objects.filter(
+        unidade=user.unidade,
+        data_prevista_atendimento__month=mes_ref,
+        data_prevista_atendimento__year=ano_ref
+    )
+    
+    tecnicos_auto = ", ".join(filter(None, set(os_do_mes.values_list('tecnicos_escalados', flat=True))))
+    materiais_auto = "\n".join(filter(None, set(os_do_mes.values_list('materiais_utilizados', flat=True))))
+
+    relatorio_existente = RelatorioDMRMensal.objects.filter(
+        unidade=user.unidade, mes_referencia=mes_ref, ano_referencia=ano_ref
+    ).first()
+
+    if request.method == 'POST':
+        form = RelatorioDMRMensalForm(request.POST, instance=relatorio_existente)
+        if form.is_valid():
+            relatorio = form.save(commit=False)
+            relatorio.unidade = user.unidade
+            relatorio.autor = user
+            relatorio.mes_referencia = mes_ref
+            relatorio.ano_referencia = ano_ref
+            relatorio.save()
+
+            messages.success(request, f"Relatório DMR Mensal de {mes_ref:02d}/{ano_ref} salvo com sucesso!")
+            return redirect('dashboard')
+    else:
+        initial_data = {
+            'funcionarios_escalados': tecnicos_auto or "Cristian",
+            'materiais_utilizados_observacoes': materiais_auto or "",
+        }
+        form = RelatorioDMRMensalForm(instance=relatorio_existente, initial=initial_data)
+
+    return render(request, 'solicitacoes/criar_relatorio_dmr_mensal.html', {
+        'form': form,
+        'mes_ref': mes_ref,
+        'ano_ref': ano_ref,
+        'relatorio_existente': relatorio_existente
+    })
+
+
+@login_required
+def central_relatorios_dmr_view(request):
+    user = request.user
+    if user.perfil != Usuario.PerfilChoices.GESTOR:
+        messages.error(request, "Acesso restrito a gestores.")
+        return redirect('dashboard')
+
+    hoje = date.today()
+    mes_filtro = int(request.GET.get('mes', hoje.month))
+    ano_filtro = int(request.GET.get('ano', hoje.year))
+
+    unidades_jurisdicao = user.unidades_gerenciadas.all()
+    unidades_ids = unidades_jurisdicao.values_list('id', flat=True)
+
+    relatorios = RelatorioDMRMensal.objects.filter(
+        unidade_id__in=unidades_ids,
+        mes_referencia=mes_filtro,
+        ano_referencia=ano_filtro
+    ).select_related('unidade', 'autor')
+
+    unidades_emitidas_ids = relatorios.values_list('unidade_id', flat=True)
+    unidades_pendentes = unidades_jurisdicao.exclude(id__in=unidades_emitidas_ids)
+
+    context = {
+        'relatorios': relatorios,
+        'unidades_pendentes': unidades_pendentes,
+        'mes_filtro': mes_filtro,
+        'ano_filtro': ano_filtro,
+        'total_jurisdicao': unidades_jurisdicao.count(),
+        'total_emitidos': relatorios.count(),
+        'total_pendentes_count': unidades_pendentes.count(),
+    }
+    return render(request, 'solicitacoes/central_relatorios_dmr.html', context)
+
+
+@login_required
+def detalhar_relatorio_dmr_view(request, pk):
+    relatorio = get_object_or_404(RelatorioDMRMensal, pk=pk)
+    return render(request, 'solicitacoes/detalhar_relatorio_dmr.html', {'relatorio': relatorio})

@@ -1,99 +1,126 @@
 from django.db import models
 from django.conf import settings
-from accounts.models import Unidade
+from django.utils import timezone
+from accounts.models import Unidade, Usuario
+
 
 class OrdemServico(models.Model):
     class StatusChoices(models.TextChoices):
-        RASCUNHO = 'RASCUNHO', 'Rascunho (Não Enviado)'
-        ENVIADO = 'ENVIADO', 'Solicitado (Na Caixa do Gestor)'
+        RASCUNHO = 'RASCUNHO', 'Rascunho'
+        ENVIADO = 'ENVIADO', 'Enviado (Aguardando Análise)'
         EM_ATENDIMENTO = 'EM_ATENDIMENTO', 'Em Atendimento / Agendado'
         CONCLUIDO = 'CONCLUIDO', 'Concluído'
-        BAIXADO = 'BAIXADO', 'Recusado / Baixado'
+        CANCELADO = 'CANCELADO', 'Cancelado'
 
     class PrioridadeChoices(models.TextChoices):
-        BAIXA = 'BAIXA', 'Baixa'
-        MEDIA = 'MEDIA', 'Média'
-        ALTA = 'ALTA', 'Alta / Urgente'
+        BAIXA = 'BAIXA', 'Prioridade Baixa'
+        NORMAL = 'NORMAL', 'Normal'
+        URGENTE = 'URGENTE', 'Urgente'
+        URGENTISSIMO = 'URGENTISSIMO', 'Urgentíssimo'
 
-    class JustificativaChoices(models.TextChoices):
-        EFETIVO = 'EFETIVO', 'Falta de Efetivo / Mão de Obra'
-        VERBA = 'VERBA', 'Falta de Verba / Contrato de Peças'
-        REAGENDADO = 'REAGENDADO', 'Reagendado a Pedido da Unidade'
-        CLIMA = 'CLIMA', 'Condições Climáticas / Acesso Impedido'
-        OUTROS = 'OUTROS', 'Outros Motivos Operacionais'
-
-    # Identificação
-    numero_os = models.CharField(max_length=20, unique=True, editable=False, verbose_name="Número da OS")
-    solicitante = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='os_solicitadas', verbose_name="Solicitante")
-    unidade = models.ForeignKey(Unidade, on_delete=models.CASCADE, related_name='ordens_servico', verbose_name="Unidade")
+    unidade = models.ForeignKey(Unidade, on_delete=models.CASCADE, related_name='ordens_servico')
+    solicitante = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='minhas_os')
+    numero_os = models.CharField(max_length=30, unique=True, editable=False)
+    assunto = models.CharField(max_length=150)
+    prioridade = models.CharField(max_length=20, choices=PrioridadeChoices.choices, default=PrioridadeChoices.NORMAL)
+    descricao = models.TextField(verbose_name="Descrição Sucinta do Problema")
     
-    # Conteúdo da Solicitação
-    assunto = models.CharField(max_length=200, verbose_name="Assunto / Título")
-    descricao = models.TextField(verbose_name="Descrição Detalhada da Demanda")
-    prioridade = models.CharField(max_length=10, choices=PrioridadeChoices.choices, default=PrioridadeChoices.MEDIA)
-    anexo_solicitante = models.FileField(upload_to='anexos_solicitacoes/', null=True, blank=True, verbose_name="Anexo / Foto do Solicitante")
+    # Anexo e Histórico
+    anexo_solicitante = models.FileField(upload_to='anexos_os/', null=True, blank=True)
+    os_vinculada = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='reiteracoes')
     
-    # Status e Fluxo
+    # Análise do Gestor & Execução
     status = models.CharField(max_length=20, choices=StatusChoices.choices, default=StatusChoices.RASCUNHO)
-    os_vinculada = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='reaberturas', verbose_name="Vincular a OS Anterior")
+    data_prevista_atendimento = models.DateField(null=True, blank=True)
+    tecnicos_escalados = models.CharField(max_length=200, default='Cristian', null=True, blank=True, verbose_name="Responsável / Fiscal Preposto")
+    materiais_utilizados = models.TextField(null=True, blank=True, verbose_name="Materiais e Peças Utilizadas")
+    parecer_gestor = models.TextField(null=True, blank=True)
     
-    # Gestão, Agendamento e Parecer
-    data_prevista_atendimento = models.DateField(null=True, blank=True, verbose_name="Data Prevista para Atendimento / Visita")
-    parecer_gestor = models.TextField(null=True, blank=True, verbose_name="Parecer Técnico do Gestor")
-    justificativa_auditoria = models.CharField(max_length=20, choices=JustificativaChoices.choices, null=True, blank=True, verbose_name="Justificativa de Auditoria / Atraso")
-    justificativa_detalhes = models.TextField(null=True, blank=True, verbose_name="Detalhamento da Justificativa")
-    
-    # Datas de Auditoria
-    criado_em = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
-    enviado_em = models.DateTimeField(null=True, blank=True, verbose_name="Data de Envio")
-    agendado_em = models.DateTimeField(null=True, blank=True, verbose_name="Data do Agendamento")
-    concluido_em = models.DateTimeField(null=True, blank=True, verbose_name="Data de Conclusão")
-    atualizado_em = models.DateTimeField(auto_now=True, verbose_name="Última Atualização")
+    # Auditoria e Impedimentos
+    justificativa_auditoria = models.CharField(max_length=100, null=True, blank=True)
+    justificativa_detalhes = models.TextField(null=True, blank=True)
 
-    class Meta:
-        verbose_name = "Ordem de Serviço"
-        verbose_name_plural = "Ordens de Serviço"
-        ordering = ['-criado_em']
-
-    def __str__(self):
-        return f"{self.numero_os} - {self.assunto} ({self.get_status_display()})"
+    # Datas de Controle
+    criado_em = models.DateTimeField(auto_now_add=True)
+    enviado_em = models.DateTimeField(null=True, blank=True)
+    agendado_em = models.DateTimeField(null=True, blank=True)
+    concluido_em = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        if not self.numero_os:
+        if not self.numero_os or "ExtractYear" in self.numero_os:
+            ano = timezone.now().year
             ultimo_id = OrdemServico.objects.count() + 1
-            self.numero_os = f"OS-2026-{ultimo_id:04d}"
+            self.numero_os = f"OS-{ano}-{ultimo_id:04d}"
         super().save(*args, **kwargs)
 
     @property
     def cor_badge_status(self):
         mapa = {
-            self.StatusChoices.RASCUNHO: 'danger',          # Vermelho Vivo
-            self.StatusChoices.ENVIADO: 'warning text-dark', # Amarelo/Âmbar
-            self.StatusChoices.EM_ATENDIMENTO: 'info',       # Laranja/Azul Atendimento
-            self.StatusChoices.CONCLUIDO: 'success',         # Verde
-            self.StatusChoices.BAIXADO: 'dark',              # Roxo/Escuro
+            self.StatusChoices.RASCUNHO: 'secondary',
+            self.StatusChoices.ENVIADO: 'warning text-dark',
+            self.StatusChoices.EM_ATENDIMENTO: 'info text-dark',
+            self.StatusChoices.CONCLUIDO: 'success',
+            self.StatusChoices.CANCELADO: 'danger',
         }
         return mapa.get(self.status, 'secondary')
 
+    @property
+    def cor_badge_prioridade(self):
+        mapa = {
+            self.PrioridadeChoices.BAIXA: 'secondary',
+            self.PrioridadeChoices.NORMAL: 'primary',
+            self.PrioridadeChoices.URGENTE: 'danger',
+            self.PrioridadeChoices.URGENTISSIMO: 'danger fw-bold',
+        }
+        return mapa.get(self.prioridade, 'secondary')
+
+    def __str__(self):
+        return f"{self.numero_os} - {self.assunto} ({self.unidade.sigla})"
+
 
 class FeedbackDMR(models.Model):
-    class TipoChoice(models.TextChoices):
-        RECLAMACAO = 'RECLAMACAO', 'Reclamação'
+    class TipoChoices(models.TextChoices):
         ELOGIO = 'ELOGIO', 'Elogio'
-        COMENTARIO = 'COMENTARIO', 'Comentário / Sugestão'
+        OBSERVACAO = 'OBSERVACAO', 'Observação / Apontamento'
+        RECLAMACAO = 'RECLAMACAO', 'Reclamação / Irregularidade'
 
-    ordem_servico = models.ForeignKey(OrdemServico, on_delete=models.CASCADE, related_name='feedbacks', null=True, blank=True, verbose_name="Ordem de Serviço Relacionada")
-    unidade = models.ForeignKey(Unidade, on_delete=models.CASCADE, related_name='feedbacks_dmr', verbose_name="Unidade")
-    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Autor")
-    tipo = models.CharField(max_length=20, choices=TipoChoice.choices, default=TipoChoice.COMENTARIO)
-    mensagem = models.TextField(verbose_name="Relato / Comentário")
-    anexo_foto = models.FileField(upload_to='feedbacks_dmr/', null=True, blank=True, verbose_name="Anexo / Foto de Comprovação")
-    criado_em = models.DateTimeField(auto_now_add=True, verbose_name="Data do Registro")
-
-    class Meta:
-        verbose_name = "Feedback DMR/IMR"
-        verbose_name_plural = "Feedbacks DMR/IMR"
-        ordering = ['-criado_em']
+    unidade = models.ForeignKey(Unidade, on_delete=models.CASCADE, related_name='feedbacks_dmr')
+    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    ordem_servico = models.ForeignKey(OrdemServico, on_delete=models.SET_NULL, null=True, blank=True, related_name='feedbacks')
+    tipo = models.CharField(max_length=20, choices=TipoChoices.choices, default=TipoChoices.OBSERVACAO)
+    mensagem = models.TextField()
+    anexo_foto = models.FileField(upload_to='feedbacks_dmr/', null=True, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.unidade.sigla} ({self.criado_em.strftime('%d/%m/%Y')})"
+
+
+class RelatorioDMRMensal(models.Model):
+    class SimNaoChoices(models.TextChoices):
+        SIM = 'SIM', 'Sim'
+        NAO = 'NAO', 'Não'
+
+    unidade = models.ForeignKey(Unidade, on_delete=models.CASCADE, related_name='relatorios_dmr_mensais')
+    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    mes_referencia = models.IntegerField(verbose_name="Mês (1-12)")
+    ano_referencia = models.IntegerField(verbose_name="Ano")
+    data_visita = models.DateField(null=True, blank=True)
+    houve_visita = models.BooleanField(default=True, verbose_name="Houve visita técnica no mês?")
+    
+    funcionarios_escalados = models.CharField(max_length=255, default='Cristian', null=True, blank=True, verbose_name="1- Responsável / Fiscal Preposto pelo Serviço")
+    prazo_cronograma_cumprido = models.CharField(max_length=3, choices=SimNaoChoices.choices, default=SimNaoChoices.SIM, verbose_name="2- Manutenção executada no prazo?")
+    plano_manutencao_realizado = models.CharField(max_length=3, choices=SimNaoChoices.choices, default=SimNaoChoices.SIM, verbose_name="3- Serviços do plano todos realizados?")
+    servicos_eventuais_prontos = models.CharField(max_length=3, choices=SimNaoChoices.choices, default=SimNaoChoices.SIM, verbose_name="4- Serviços eventuais prontamente realizados?")
+    equipamento_fora_uso = models.CharField(max_length=3, choices=SimNaoChoices.choices, default=SimNaoChoices.NAO, verbose_name="5- Existe equipamento fora de uso por falta de manutenção?")
+    equipamento_especificacao = models.TextField(null=True, blank=True, verbose_name="Especificar equipamento fora de uso")
+    materiais_utilizados_observacoes = models.TextField(null=True, blank=True, verbose_name="6- Materiais e quantidades informadas")
+    outras_observacoes = models.TextField(null=True, blank=True, verbose_name="7- Outras observações (Pendências, Qualidade)")
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('unidade', 'mes_referencia', 'ano_referencia')
+
+    def __str__(self):
+        return f"DMR {self.mes_referencia:02d}/{self.ano_referencia} - {self.unidade.sigla}"

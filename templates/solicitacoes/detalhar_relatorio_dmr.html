@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}DMR {{ relatorio.unidade.sigla }} {{ relatorio.mes_referencia }}/{{ relatorio.ano_referencia }} - Solicita{% endblock %}
+
+{% block content %}
+<style>
+    @media print {
+        .sidebar, .navbar, .btn-print, footer { display: none !important; }
+        .main-wrapper { margin: 0 !important; padding: 0 !important; }
+        .card { border: 1px solid #333 !important; box-shadow: none !important; }
+    }
+</style>
+
+<div class="container py-2">
+    <div class="d-flex justify-content-between align-items-center mb-4 btn-print">
+        <h4 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-file-invoice me-2"></i>Relatório Individual de DMR / IMR</h4>
+        <div>
+            <button onclick="window.print()" class="btn btn-primary fw-bold me-2">
+                <i class="fa-solid fa-print me-1"></i>Imprimir / Salvar PDF
+            </button>
+            <a href="{% url 'central_relatorios_dmr' %}" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-arrow-left me-1"></i>Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- DOCUMENTO FORMATADO (OFICIAL RFB) -->
+    <div class="card p-4 border-dark shadow-sm bg-white">
+        <div class="text-center mb-3 pb-2 border-bottom">
+            <h5 class="fw-bold mb-1">RECEITA FEDERAL DO BRASIL</h5>
+            <h6 class="fw-bold text-uppercase mb-1">{{ relatorio.unidade.nome }}</h6>
+            <small class="text-muted d-block">EQUIPE DE LOGÍSTICA / FISCALIZAÇÃO DE CONTRATOS</small>
+            <strong class="d-block mt-2 fs-5">Acompanhamento Mensal dos Serviços de Manutenção (DMR / IMR)</strong>
+        </div>
+
+        <div class="row g-2 mb-3 bg-light p-2 rounded border">
+            <div class="col-md-6">
+                <strong>Unidade:</strong> {{ relatorio.unidade.nome }} ({{ relatorio.unidade.sigla }})
+            </div>
+            <div class="col-md-3">
+                <strong>Mês/Ano:</strong> {{ relatorio.mes_referencia|stringformat:"02d" }}/{{ relatorio.ano_referencia }}
+            </div>
+            <div class="col-md-3">
+                <strong>Data da Visita:</strong> {{ relatorio.data_visita|date:"d/m/Y"|default:"Não Houve" }}
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <strong class="d-block mb-1">1- Funcionários escalados para viajar e efetuar o serviço:</strong>
+            <p class="p-2 border rounded bg-body-tertiary mb-0">{{ relatorio.funcionarios_escalados|default:"Não informado" }}</p>
+        </div>
+
+        <div class="mb-3">
+            <strong class="d-block mb-1">2- A manutenção foi executada dentro do prazo previsto no cronograma?</strong>
+            <p class="p-2 border rounded bg-body-tertiary mb-0">{{ relatorio.get_prazo_cronograma_cumprido_display }}</p>
+        </div>
+
+        <div class="mb-3">
+            <strong class="d-block mb-1">3- Os serviços no Plano de manutenção foram todos realizados?</strong>
+            <p class="p-2 border rounded bg-body-tertiary mb-0">{{ relatorio.get_plano_manutencao_realizado_display }}</p>
+        </div>
+
+        <div class="mb-3">
+            <strong class="d-block mb-1">4- Os serviços eventuais solicitados aos funcionários foram prontamente realizados?</strong>
+            <p class="p-2 border rounded bg-body-tertiary mb-0">{{ relatorio.get_servicos_eventuais_prontos_display }}</p>
+        </div>
+
+        <div class="mb-3">
+            <strong class="d-block mb-1">5- Existe algum equipamento que se encontra fora de uso por falta de manutenção?</strong>
+            <p class="p-2 border rounded bg-body-tertiary mb-0">
+                {{ relatorio.get_equipamento_fora_uso_display }}
+                {% if relatorio.equipamento_especificacao %}
+                    — <em>{{ relatorio.equipamento_especificacao }}</em>
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="mb-3">
+            <strong class="d-block mb-1">6- QUAIS OS MATERIAIS E AS QUANTIDADES UTILIZADOS NO SERVIÇO?</strong>
+            <p class="p-2 border rounded bg-body-tertiary mb-0">{{ relatorio.materiais_utilizados_observacoes|default:"Conforme repassado pela contratada." }}</p>
+        </div>
+
+        <div class="mb-4">
+            <strong class="d-block mb-1">7- OUTRAS OBSERVAÇÕES (Pendências, Qualidade do Serviço):</strong>
+            <p class="p-2 border rounded bg-body-tertiary mb-0">{{ relatorio.outras_observacoes|default:"Sem observações." }}</p>
+        </div>
+
+        <div class="row pt-4 mt-4 border-top text-center">
+            <div class="col-md-6">
+                <p class="mb-0">__________________________________________</p>
+                <small class="fw-bold d-block">{{ relatorio.autor.get_full_name|default:relatorio.autor.username }}</small>
+                <small class="text-muted">Responsável pelo Preenchimento</small>
+            </div>
+            <div class="col-md-6">
+                <p class="mb-0">__________________________________________</p>
+                <small class="fw-bold d-block">Fiscalização de Contratos / RFB</small>
+                <small class="text-muted">Visto da Fiscalização</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

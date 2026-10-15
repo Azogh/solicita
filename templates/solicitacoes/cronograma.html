@@ -1,122 +1,193 @@
 {% extends 'base.html' %}
 
-{% block title %}Cronograma de Visitas - Solicita{% endblock %}
+{% block title %}Cronograma & Grade Semanal - Solicita{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<style>
+    /* Esconde elementos de impressão da tela normal */
+    .print-only { display: none !important; }
+
+    /* Regras de Formatação para Impressão / Exportação em PDF */
+    @media print {
+        .sidebar, .navbar, .btn-print, .screen-only, form, footer { display: none !important; }
+        .print-only { display: block !important; }
+        .main-wrapper { margin: 0 !important; padding: 0 !important; }
+        .card { border: 1px solid #ccc !important; box-shadow: none !important; }
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h3 class="fw-bold mb-0"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Cronograma & Alocação de Visitas</h3>
+        <h3 class="fw-bold mb-0"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Grade Semanal & Alocação de Visitas</h3>
         <small class="text-muted">Planejamento semanal de atendimento às unidades da jurisdição</small>
     </div>
-    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm">
-        <i class="fa-solid fa-arrow-left me-1"></i>Voltar ao Dashboard
-    </a>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-outline-dark fw-bold btn-print">
+            <i class="fa-solid fa-print me-1"></i>Imprimir / Exportar Grade
+        </button>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-print">
+            <i class="fa-solid fa-arrow-left me-1"></i>Voltar ao Dashboard
+        </a>
+    </div>
 </div>
 
-{% if tem_urgente_pendente %}
-    <div class="alert alert-danger d-flex align-items-center mb-4 shadow-sm" role="alert">
-        <i class="fa-solid fa-triangle-exclamation fs-3 me-3"></i>
-        <div>
-            <strong>Atenção Gestor:</strong> Existem Ordens de Serviço marcadas com prioridade <strong>ALTA / URGENTE</strong> aguardando definição de data no cronograma abaixo!
-        </div>
-    </div>
-{% endif %}
+<!-- ======================================================= -->
+<!-- VISÃO INTERATIVA NA TELA DO SISTEMA (SCREEN ONLY)        -->
+<!-- ======================================================= -->
 
-<!-- PAINEL SUPERIOR: Grade / Calendário dos Próximos Dias -->
-<div class="card card-custom p-3 border-0 shadow-sm mb-4">
+<!-- 1. AGENDA EM CALENDÁRIO / CARDS VISUAIS -->
+<div class="card card-custom p-4 border-0 shadow-sm mb-4 screen-only">
     <h5 class="fw-bold text-primary mb-3">
-        <i class="fa-solid fa-calendar-week me-2"></i>Agenda de Campo (Segunda a Sexta)
+        <i class="fa-solid fa-calendar-week me-2"></i>Agenda de Campo (Próximos Dias Úteis)
     </h5>
     
     <div class="row g-2">
-        {% for item in dias_grade %}
-            <div class="col-md-4 col-lg-3">
-                <div class="card h-100 border {% if item.os_list %}border-primary bg-primary-subtle{% else %}bg-body-tertiary{% endif %}">
-                    <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-2">
-                        <strong class="small text-uppercase">{{ item.data|date:"D - d/m/Y" }}</strong>
-                        <span class="badge bg-secondary">{{ item.os_list.count }} OS(s)</span>
+        {% for dia in dias_grade %}
+            <div class="col-md-3">
+                <div class="card h-100 border p-2 bg-body-tertiary">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-1 mb-2">
+                        <small class="fw-bold text-uppercase">{{ dia.dia_semana }}</small>
+                        <span class="badge bg-primary">{{ dia.data|date:"d/m/Y" }}</span>
                     </div>
-                    <div class="card-body p-2">
-                        {% for os in item.os_list %}
-                            <div class="bg-white p-2 rounded mb-2 border shadow-sm small">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <strong class="text-primary">{{ os.numero_os }}</strong>
-                                    <span class="badge bg-secondary" style="font-size: 0.65rem;">{{ os.unidade.sigla }}</span>
-                                </div>
-                                <div class="text-truncate text-muted" style="max-width: 180px;">{{ os.assunto }}</div>
-                                <div class="mt-1">
-                                    <a href="{% url 'analisar_os' os.pk %}" class="btn btn-link btn-sm p-0 text-decoration-underline" style="font-size: 0.75rem;">
-                                        Detalhes/Parecer
-                                    </a>
-                                </div>
+                    {% for os in dia.os_list %}
+                        <div class="bg-white p-2 rounded border mb-2 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-secondary">{{ os.unidade.sigla }}</span>
+                                <span class="badge bg-{{ os.cor_badge_prioridade }}">{{ os.get_prioridade_display }}</span>
                             </div>
-                        {% empty %}
-                            <div class="text-center text-muted py-3 small">
-                                <i class="fa-regular fa-calendar-xmark d-block fs-5 mb-1 opacity-50"></i>
-                                Livre
-                            </div>
-                        {% endfor %}
-                    </div>
+                            <strong class="d-block text-primary small">{{ os.numero_os }}</strong>
+                            <small class="d-block text-truncate fw-semibold">{{ os.assunto }}</small>
+                            <small class="text-muted d-block mt-1 mb-2"><i class="fa-solid fa-user me-1"></i>{{ os.tecnicos_escalados|default:"Cristian" }}</small>
+                            
+                            <!-- Botão para ir direto para a OS específica no Dashboard/Análise -->
+                            <a href="{% url 'analisar_os' os.pk %}" class="btn btn-xs btn-outline-primary w-100 fw-bold py-0" style="font-size: 0.75rem;">
+                                <i class="fa-solid fa-pen-to-square me-1"></i>Analisar / Alterar
+                            </a>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-4 text-muted small">Livre</div>
+                    {% endfor %}
                 </div>
             </div>
         {% endfor %}
     </div>
 </div>
 
-<!-- PAINEL INFERIOR: Fila de OSs Sem Data Prevista -->
-<div class="card card-custom p-3 border-0 shadow-sm">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold text-danger mb-0">
-            <i class="fa-solid fa-clock me-2"></i>Solicitações Aguardando Alocação ({{ os_pendentes.count }})
-        </h5>
-        <span class="small text-muted">Defina a data no campo e clique em "Alocar"</span>
-    </div>
+<!-- 2. PAINEL DE ALOCAÇÃO RÁPIDA -->
+<div class="card card-custom p-4 border-0 shadow-sm mb-4 screen-only">
+    <h5 class="fw-bold text-danger mb-3">
+        <i class="fa-solid fa-clock me-2"></i>Solicitações Aguardando Alocação ({{ os_pendentes.count }})
+    </h5>
 
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+    {% if os_pendentes %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código OS</th>
+                        <th>Unidade</th>
+                        <th>Assunto</th>
+                        <th>Prioridade</th>
+                        <th>Data Solicitação</th>
+                        <th class="text-center" style="width: 320px;">Atribuir Data no Cronograma</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for os in os_pendentes %}
+                        <tr>
+                            <td class="fw-bold text-primary">{{ os.numero_os }}</td>
+                            <td><span class="badge bg-secondary">{{ os.unidade.sigla }}</span></td>
+                            <td>{{ os.assunto }}</td>
+                            <td>
+                                <span class="badge bg-{{ os.cor_badge_prioridade }}">
+                                    {{ os.get_prioridade_display }}
+                                </span>
+                            </td>
+                            <td class="small">{{ os.criado_em|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <form method="post" class="d-flex gap-2">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="os_id" value="{{ os.pk }}">
+                                    <input type="date" name="data_prevista" class="form-control form-control-sm" required>
+                                    <input type="hidden" name="tecnicos_escalados" value="Cristian">
+                                    <button type="submit" name="btn_alocar" class="btn btn-sm btn-primary fw-bold text-nowrap">
+                                        <i class="fa-solid fa-calendar-check me-1"></i>Alocar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="text-center py-3 text-muted">
+            <i class="fa-solid fa-circle-check fs-2 text-success d-block mb-2"></i>
+            Todas as solicitações enviadas já foram devidamente alocadas no cronograma!
+        </div>
+    {% endif %}
+</div>
+
+
+<!-- ======================================================= -->
+<!-- VISÃO PARA IMPRESSÃO DE RELATÓRIO (PRINT ONLY)           -->
+<!-- ======================================================= -->
+
+<div class="print-only">
+    <!-- 1. Tabela Sintética de Resumo da Visita -->
+    <div class="card p-3 mb-4">
+        <h5 class="fw-bold text-primary mb-3">Resumo Semanal de Alocação de Visitas</h5>
+        <table class="table table-bordered align-middle mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Código OS</th>
+                    <th>Data Prevista</th>
                     <th>Unidade</th>
-                    <th>Assunto</th>
-                    <th>Prioridade</th>
-                    <th>Data Solicitação</th>
-                    <th style="width: 250px;">Atribuir Data no Cronograma</th>
+                    <th class="text-center">Demandas Agendadas</th>
+                    <th class="text-center">Nível Máximo de Urgência</th>
                 </tr>
             </thead>
             <tbody>
-                {% for os in os_pendentes %}
-                    <tr>
-                        <td class="fw-bold text-primary">{{ os.numero_os }}</td>
-                        <td><span class="badge bg-secondary">{{ os.unidade.sigla }}</span></td>
-                        <td>{{ os.assunto }}</td>
-                        <td>
-                            <span class="badge bg-{% if os.prioridade == 'ALTA' %}danger{% elif os.prioridade == 'MEDIA' %}warning text-dark{% else %}secondary{% endif %}">
-                                {{ os.get_prioridade_display }}
-                            </span>
-                        </td>
-                        <td>{{ os.criado_em|date:"d/m/Y H:i" }}</td>
-                        <td>
-                            <form method="post" class="d-flex gap-1">
-                                {% csrf_token %}
-                                <input type="hidden" name="os_id" value="{{ os.pk }}">
-                                <input type="date" name="data_prevista" class="form-control form-control-sm" required>
-                                <button type="submit" name="btn_alocar" class="btn btn-primary btn-sm fw-bold">
-                                    <i class="fa-solid fa-check"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">
-                            <i class="fa-solid fa-circle-check text-success fs-4 d-block mb-2"></i>
-                            Todas as solicitações enviadas já foram devidamente alocadas no cronograma!
-                        </td>
-                    </tr>
+                {% for dia in dias_grade %}
+                    {% if dia.total_os > 0 %}
+                        <tr>
+                            <td class="fw-bold">{{ dia.data|date:"d/m/Y" }} ({{ dia.dia_semana }})</td>
+                            <td><span class="badge bg-secondary">{{ user.unidade.sigla|default:"IRF/SBJ" }}</span></td>
+                            <td class="text-center fw-bold">{{ dia.total_os }} OS(s)</td>
+                            <td class="text-center">
+                                <span class="badge bg-{% if dia.prioridade_maxima == 'Urgentíssimo' or dia.prioridade_maxima == 'Urgente' %}danger{% else %}primary{% endif %}">
+                                    {{ dia.prioridade_maxima }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endif %}
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
+    <!-- 2. Listagem Detalhada por Data e Unidade -->
+    <div class="card p-3">
+        <h5 class="fw-bold text-dark mb-3">Descrição das Demandas por Visita</h5>
+        <div class="list-group list-group-flush">
+            {% for dia in dias_grade %}
+                {% if dia.total_os > 0 %}
+                    <div class="list-group-item px-0 py-2 border-bottom">
+                        <h6 class="fw-bold text-primary mb-2">
+                            {{ dia.data|date:"d/m/Y" }} / {{ user.unidade.sigla|default:"IRF/SBJ" }} — Responsável: Cristian
+                        </h6>
+                        <ul class="mb-0 ps-3">
+                            {% for os in dia.os_list %}
+                                <li class="mb-1">
+                                    <strong>[{{ os.numero_os }}] {{ os.assunto }}:</strong> {{ os.descricao }}
+                                    <span class="badge bg-{{ os.cor_badge_prioridade }} ms-1">{{ os.get_prioridade_display }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
 </div>
+
 {% endblock %}

@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}DMR Mensal {{ mes_ref }}/{{ ano_ref }} - Solicita{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-9">
+        <div class="card card-custom p-4 border-0 shadow-sm mb-4">
+            
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                <div>
+                    <span class="badge bg-primary fs-6 mb-1">Acompanhamento Mensal de Serviços</span>
+                    <h3 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-file-contract me-2"></i>Relatório DMR Mensal — {{ mes_ref|stringformat:"02d" }}/{{ ano_ref }}</h3>
+                    <small class="text-muted">Unidade: <strong>{{ user.unidade.sigla }}</strong> - {{ user.unidade.nome }}</small>
+                </div>
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Voltar
+                </a>
+            </div>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <!-- Opção Houve Visita -->
+                <div class="card bg-body-tertiary border p-3 mb-4">
+                    <div class="form-check form-switch fs-5">
+                        <input class="form-check-input" type="checkbox" role="switch" id="id_houve_visita" name="houve_visita" {% if form.houve_visita.value != False %}checked{% endif %}>
+                        <label class="form-check-label fw-bold text-dark" for="id_houve_visita">
+                            Houve visita técnica da empresa de manutenção neste mês?
+                        </label>
+                    </div>
+                    <small class="text-muted d-block mt-1">
+                        Desmarque caso a contratada NÃO tenha realizado nenhuma visita ou atendimento na unidade no mês corrente.
+                    </small>
+                </div>
+
+                <div id="bloco-perguntas-dmr">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            {{ form.data_visita|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.funcionarios_escalados|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="card border p-3 mb-4 bg-light">
+                        <h6 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-clipboard-check me-2"></i>Avaliação dos Serviços Executados</h6>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                {{ form.prazo_cronograma_cumprido|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.plano_manutencao_realizado|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.servicos_eventuais_prontos|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border p-3 mb-4 bg-light">
+                        <h6 class="fw-bold text-danger mb-3"><i class="fa-solid fa-triangle-exclamation me-2"></i>Equipamentos Fora de Uso</h6>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                {{ form.equipamento_fora_uso|as_crispy_field }}
+                            </div>
+                            <div class="col-md-8">
+                                {{ form.equipamento_especificacao|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.materiais_utilizados_observacoes|as_crispy_field }}
+                    </div>
+
+                    <div class="mb-4">
+                        {{ form.outras_observacoes|as_crispy_field }}
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">
+                        <i class="fa-solid fa-floppy-disk me-2"></i>Salvar e Consolidar Relatório DMR
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const switchVisita = document.getElementById('id_houve_visita');
+        const blocoPerguntas = document.getElementById('bloco-perguntas-dmr');
+
+        function toggleBloco() {
+            if (switchVisita.checked) {
+                blocoPerguntas.style.display = 'block';
+            } else {
+                blocoPerguntas.style.display = 'none';
+            }
+        }
+
+        switchVisita.addEventListener('change', toggleBloco);
+        toggleBloco();
+    });
+</script>
+{% endblock %}
