@@ -3,31 +3,23 @@
 {% block title %}Central de Relatórios DMR / IMR - Solicita{% endblock %}
 
 {% block content %}
-<style>
-    @media print {
-        .sidebar, .navbar, .btn-print, form, footer { display: none !important; }
-        .main-wrapper { margin: 0 !important; padding: 0 !important; }
-        .card { border: 1px solid #ccc !important; box-shadow: none !important; }
-    }
-</style>
-
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h3 class="fw-bold mb-0"><i class="fa-solid fa-file-contract text-primary me-2"></i>Central de Relatórios DMR / IMR Mensais</h3>
-        <small class="text-muted">Acompanhamento da emissão e auditoria de contratos das unidades sob sua jurisdição</small>
+        <h3 class="fw-bold mb-0"><i class="fa-solid fa-file-contract text-primary me-2"></i>Central de Relatórios DMR / IMR</h3>
+        <small class="text-muted">Acompanhamento da emissão e auditoria de contratos da jurisdição</small>
     </div>
     <div class="d-flex gap-2">
-        <button onclick="window.print()" class="btn btn-outline-dark fw-bold btn-print">
-            <i class="fa-solid fa-print me-1"></i>Imprimir IMR Consolidado da Jurisdição
-        </button>
-        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-print">
+        <a href="{% url 'exportar_imr_consolidado_jurisdicao_pdf' %}?mes={{ mes_filtro }}&ano={{ ano_filtro }}" class="btn btn-primary fw-bold">
+            <i class="fa-solid fa-chart-pie me-1"></i>Gerar IMR Consolidado da Jurisdição (PDF)
+        </a>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
             <i class="fa-solid fa-arrow-left me-1"></i>Voltar
         </a>
     </div>
 </div>
 
 <!-- Filtro por Mês e Ano -->
-<div class="card card-custom p-3 mb-4 border-0 shadow-sm btn-print">
+<div class="card card-custom p-3 mb-4 border-0 shadow-sm">
     <form method="get" class="row g-2 align-items-center">
         <div class="col-md-3">
             <label class="form-label fw-bold small mb-1">Mês de Referência:</label>
@@ -84,7 +76,6 @@
     </div>
 </div>
 
-<!-- Alerta de Unidades Pendentes -->
 {% if unidades_pendentes %}
     <div class="alert alert-warning border-warning shadow-sm mb-4">
         <h6 class="fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation me-2"></i>Atenção: Unidades com DMR Pendente em {{ mes_filtro }}/{{ ano_filtro }}:</h6>
@@ -96,53 +87,83 @@
     </div>
 {% endif %}
 
-<!-- Tabela de Relatórios Emitidos -->
-<div class="card card-custom p-4 border-0 shadow-sm">
-    <h5 class="fw-bold mb-3"><i class="fa-solid fa-list-check me-2 text-primary"></i>Relatórios Consolidados do Mês {{ mes_filtro }}/{{ ano_filtro }}</h5>
-    
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Unidade</th>
-                    <th>Data da Visita</th>
-                    <th>Visita Realizada?</th>
-                    <th>Observações / Ressalvas</th>
-                    <th>Data de Emissão</th>
-                    <th class="text-end btn-print">Ação</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in relatorios %}
+<!-- Form de Seleção em Lote -->
+<form method="post" action="{% url 'exportar_dmrs_selecionados_pdf' %}">
+    {% csrf_token %}
+    <div class="card card-custom p-4 border-0 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="fa-solid fa-list-check me-2 text-primary"></i>Relatórios Consolidados de {{ mes_filtro }}/{{ ano_filtro }}</h5>
+            <button type="submit" class="btn btn-outline-primary btn-sm fw-bold">
+                <i class="fa-solid fa-file-pdf me-1"></i>Baixar DMRs Selecionados em PDF
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
                     <tr>
-                        <td><span class="badge bg-secondary fs-6">{{ r.unidade.sigla }}</span></td>
-                        <td>{{ r.data_visita|date:"d/m/Y"|default:"Sem visita" }}</td>
-                        <td>
-                            {% if r.houve_visita %}
-                                <span class="badge bg-success">Sim</span>
-                            {% else %}
-                                <span class="badge bg-danger">Não Houve Visita</span>
-                            {% endif %}
-                        </td>
-                        <td class="small text-truncate" style="max-width: 250px;">
-                            {{ r.outras_observacoes|default:"Sem observações registradas." }}
-                        </td>
-                        <td class="small">{{ r.criado_em|date:"d/m/Y H:i" }}</td>
-                        <td class="text-end btn-print">
-                            <a href="{% url 'detalhar_relatorio_dmr' r.pk %}" class="btn btn-sm btn-outline-primary fw-bold" title="Visualizar e Exportar PDF">
-                                <i class="fa-solid fa-eye me-1"></i>Visualizar DMR
-                            </a>
-                        </td>
+                        <th style="width: 40px;" class="text-center">
+                            <input type="checkbox" id="select-all-dmr" class="form-check-input">
+                        </th>
+                        <th>Unidade</th>
+                        <th>Data da Visita</th>
+                        <th>Visita Realizada?</th>
+                        <th>Observações / Ressalvas</th>
+                        <th>Data de Emissão</th>
+                        <th class="text-end">Ações</th>
                     </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">
-                            Nenhum relatório DMR foi emitido para o período selecionado ({{ mes_filtro }}/{{ ano_filtro }}).
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% for r in relatorios %}
+                        <tr>
+                            <td class="text-center">
+                                <input type="checkbox" name="relatorios_ids" value="{{ r.pk }}" class="form-check-input dmr-checkbox">
+                            </td>
+                            <td><span class="badge bg-secondary fs-6">{{ r.unidade.sigla }}</span></td>
+                            <td>{{ r.data_visita|date:"d/m/Y"|default:"Sem visita" }}</td>
+                            <td>
+                                {% if r.houve_visita %}
+                                    <span class="badge bg-success">Sim</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Não Houve</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-truncate" style="max-width: 250px;">
+                                {{ r.outras_observacoes|default:"Sem observações registradas." }}
+                            </td>
+                            <td class="small">{{ r.criado_em|date:"d/m/Y H:i" }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'detalhar_relatorio_dmr' r.pk %}" class="btn btn-sm btn-outline-primary fw-bold">
+                                    <i class="fa-solid fa-eye me-1"></i>Ver
+                                </a>
+                                <a href="{% url 'exportar_dmr_pdf' r.pk %}" class="btn btn-sm btn-outline-secondary fw-bold ms-1" title="Download PDF Individual">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                Nenhum relatório DMR foi emitido para o período selecionado ({{ mes_filtro }}/{{ ano_filtro }}).
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAll = document.getElementById('select-all-dmr');
+        const checkboxes = document.querySelectorAll('.dmr-checkbox');
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            });
+        }
+    });
+</script>
 {% endblock %}

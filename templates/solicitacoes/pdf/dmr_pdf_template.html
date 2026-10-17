@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 0.8cm 1.2cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 9.5pt;
+            color: #111;
+            line-height: 1.2;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+        }
+        .header h3 { margin: 0; font-size: 11pt; color: #003366; }
+        .header h4 { margin: 2px 0; font-size: 9.5pt; }
+        .header p { margin: 0; font-size: 8pt; color: #555; }
+        .header .doc-title {
+            font-weight: bold;
+            margin-top: 4px;
+            font-size: 10pt;
+            color: #000;
+        }
+        
+        .box-info {
+            background-color: #f2f4f7;
+            border: 1px solid #ccc;
+            padding: 5px 8px;
+            margin-bottom: 8px;
+            font-size: 9pt;
+        }
+
+        .item-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+        }
+        .item-table td {
+            padding: 4px 6px;
+            border: 1px solid #ddd;
+            font-size: 9pt;
+            vertical-align: top;
+        }
+        .label-cell {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #003366;
+            width: 75%;
+        }
+        .val-cell {
+            text-align: center;
+            font-weight: bold;
+            width: 25%;
+        }
+
+        .section-block {
+            margin-bottom: 6px;
+        }
+        .section-title {
+            font-weight: bold;
+            font-size: 9pt;
+            color: #003366;
+            margin-bottom: 2px;
+        }
+        .section-content {
+            background-color: #fafafa;
+            border: 1px solid #ccc;
+            padding: 4px 6px;
+            font-size: 8.5pt;
+            min-height: 28px;
+        }
+
+        .signatures {
+            margin-top: 25px;
+            width: 100%;
+        }
+        .signature-cell {
+            width: 48%;
+            display: inline-block;
+            text-align: center;
+            font-size: 8.5pt;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h3>RECEITA FEDERAL DO BRASIL</h3>
+        <h4>{{ relatorio.unidade.nome|upper }}</h4>
+        <p>EQUIPE DE LOGÍSTICA / FISCALIZAÇÃO DE CONTRATOS</p>
+        <p class="doc-title">Acompanhamento Mensal dos Serviços de Manutenção (DMR / IMR)</p>
+    </div>
+
+    <div class="box-info">
+        <strong>Unidade:</strong> {{ relatorio.unidade.nome }} ({{ relatorio.unidade.sigla }}) &nbsp;|&nbsp;
+        <strong>Mês/Ano:</strong> {{ relatorio.mes_referencia|stringformat:"02d" }}/{{ relatorio.ano_referencia }} &nbsp;|&nbsp;
+        <strong>Data Visita:</strong> {{ relatorio.data_visita|date:"d/m/Y"|default:"Não Houve Visita" }}
+    </div>
+
+    <div class="section-block">
+        <div class="section-title">1- Funcionários escalados para viajar e efetuar o serviço:</div>
+        <div class="section-content">{{ relatorio.funcionarios_escalados|default:"Não informado" }}</div>
+    </div>
+
+    <!-- Perguntas em Tabela Compacta -->
+    <table class="item-table">
+        <tr>
+            <td class="label-cell">2- A manutenção foi executada dentro do prazo previsto no cronograma?</td>
+            <td class="val-cell">{{ relatorio.get_prazo_cronograma_cumprido_display }}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">3- Os serviços no Plano de manutenção foram todos realizados?</td>
+            <td class="val-cell">{{ relatorio.get_plano_manutencao_realizado_display }}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">4- Os serviços eventuais solicitados foram prontamente realizados?</td>
+            <td class="val-cell">{{ relatorio.get_servicos_eventuais_prontos_display }}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">5- Existe algum equipamento que se encontra fora de uso por falta de manutenção?</td>
+            <td class="val-cell">
+                {{ relatorio.get_equipamento_fora_uso_display }}
+                {% if relatorio.equipamento_especificacao %}<br><small>({{ relatorio.equipamento_especificacao }})</small>{% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <div class="section-block">
+        <div class="section-title">6- QUAIS OS MATERIAIS E AS QUANTIDADES UTILIZADOS NO SERVIÇO?</div>
+        <div class="section-content">{{ relatorio.materiais_utilizados_observacoes|default:"Conforme repassado pela contratada." }}</div>
+    </div>
+
+    <div class="section-block">
+        <div class="section-title">7- OUTRAS OBSERVAÇÕES (Pendências, Qualidade do Serviço):</div>
+        <div class="section-content">{{ relatorio.outras_observacoes|default:"Sem observações." }}</div>
+    </div>
+
+    <div class="signatures">
+        <div class="signature-cell">
+            __________________________________________<br>
+            <strong>{{ relatorio.autor.get_full_name|default:relatorio.autor.username }}</strong><br>
+            Responsável pelo Preenchimento
+        </div>
+        <div class="signature-cell" style="float: right;">
+            __________________________________________<br>
+            <strong>Fiscalização de Contratos / RFB</strong><br>
+            Visto da Fiscalização
+        </div>
+    </div>
+
+</body>
+</html>

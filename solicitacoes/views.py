@@ -8,6 +8,7 @@ from django.conf import settings
 from .models import OrdemServico, FeedbackDMR, RelatorioDMRMensal
 from .forms import OrdemServicoForm, GestorAnaliseForm, FeedbackDMRForm, RelatorioDMRMensalForm
 from accounts.models import Usuario
+from .utils import render_to_pdf
 
 
 def notificar_gestores_por_email(os_item, request):
@@ -388,3 +389,179 @@ def central_relatorios_dmr_view(request):
 def detalhar_relatorio_dmr_view(request, pk):
     relatorio = get_object_or_404(RelatorioDMRMensal, pk=pk)
     return render(request, 'solicitacoes/detalhar_relatorio_dmr.html', {'relatorio': relatorio})
+
+
+@login_required
+def exportar_dmr_pdf_view(request, pk):
+    """ Gera e faz o download do PDF individual do DMR """
+    relatorio = get_object_or_404(RelatorioDMRMensal, pk=pk)
+    
+    context = {
+        'relatorio': relatorio,
+        'user': request.user,
+    }
+    
+    pdf = render_to_pdf('solicitacoes/pdf/dmr_pdf_template.html', context)
+    if pdf:
+        response = pdf
+        filename = f"DMR_{relatorio.unidade.sigla}_{relatorio.mes_referencia:02d}_{relatorio.ano_referencia}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    
+    messages.error(request, "Erro ao gerar arquivo PDF do DMR.")
+    return redirect('detalhar_relatorio_dmr', pk=pk)
+
+
+@login_required
+def exportar_grade_semanal_pdf_view(request):
+    """ Gera e faz o download do PDF da Grade Semanal do Gestor """
+    user = request.user
+    if user.perfil != Usuario.PerfilChoices.GESTOR:
+        messages.error(request, "Acesso restrito a gestores.")
+        return redirect('dashboard')
+
+    unidades_ids = user.unidades_gerenciadas.values_list('id', flat=True)
+    os_agendadas = OrdemServico.objects.filter(
+        unidade_id__in=unidades_ids,
+        status=OrdemServico.StatusChoices.EM_ATENDIMENTO,
+        data_prevista_atendimento__isnull=False
+    ).order_by('data_prevista_atendimento')
+
+    hoje = date.today()
+    dias_grade = []
+    
+    peso_prioridade = {'URGENTISSIMO': 4, 'URGENTE': 3, 'NORMAL': 2, 'BAIXA': 1}
+    mapa_prioridade_display = {'URGENTISSIMO': 'Urgentíssimo', 'URGENTE': 'Urgente', 'NORMAL': 'Normal', 'BAIXA': 'Baixa'}
+
+    for i in range(14):
+        dia_corrente = hoje + timedelta(days=i)
+        if dia_corrente.weekday() < 5:
+            os_no_dia = os_agendadas.filter(data_prevista_atendimento=dia_corrente)
+            
+            prioridade_mais_alta = "Nenhuma"
+            maior_peso = 0
+            for item in os_no_dia:
+                peso = peso_prioridade.get(item.prioridade, 0)
+                if peso > maior_peso:
+                    maior_peso = peso
+                    prioridade_mais_alta = mapa_prioridade_display.get(item.prioridade, 'Normal')
+
+            dias_grade.append({
+                'data': dia_corrente,
+                'dia_semana': dia_corrente.strftime('%A'),
+                'os_list': os_no_dia,
+                'total_os': os_no_dia.count(),
+                'prioridade_maxima': prioridade_mais_alta
+            })
+
+    context = {
+        'dias_grade': dias_grade,
+        'user': request.user,
+        'hoje': hoje,
+    }
+
+    pdf = render_to_pdf('solicitacoes/pdf/grade_semanal_pdf_template.html', context)
+    if pdf:
+        response = pdf
+        filename = f"Grade_Semanal_{hoje.strftime('%Y%m%d')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    messages.error(request, "Erro ao gerar arquivo PDF da Grade Semanal.")
+    return redirect('cronograma_visitas')
+
+
+@login_required
+def exportar_dmrs_selecionados_pdf_view(request):
+    """ Exporta múltiplos DMRs selecionados via checkbox num único PDF (1 por página) """
+    if request.method == 'POST':
+        ids_selecionados = request.POST.getlist('relatorios_ids')
+        if not ids_selecionados:
+            messages.warning(request, "Selecione ao menos um relatório DMR para baixar.")
+            return redirect('central_relatorios_dmr')
+
+        relatorios = RelatorioDMRMensal.objects.filter(
+            id__in=ids_selecionados,
+            unidade__in=request.user.unidades_gerenciadas.all()
+        ).select_related('unidade', 'autor')
+
+        context = {
+            'relatorios': relatorios,
+            'user': request.user,
+        }
+
+        pdf = render_to_pdf('solicitacoes/pdf/dmr_lote_pdf_template.html', context)
+        if pdf:
+            response = pdf
+            response['Content-Disposition'] = 'attachment; filename="DMRs_Compilados_Jurisdicao.pdf"'
+            return response
+
+    messages.error(request, "Erro ao gerar arquivo compilado de DMRs.")
+    return redirect('central_relatorios_dmr')
+
+
+@login_required
+def exportar_imr_consolidado_jurisdicao_pdf_view(request):
+    """ Gera o Relatório Executivo/Sintético do IMR da Jurisdição do Gestor """
+    user = request.user
+    if user.perfil != Usuario.PerfilChoices.GESTOR:
+        messages.error(request, "Acesso restrito a gestores.")
+        return redirect('dashboard')
+
+    hoje = date.today()
+    mes_filtro = int(request.GET.get('mes', hoje.month))
+    ano_filtro = int(request.GET.get('ano', hoje.year))
+
+    unidades_jurisdicao = user.unidades_gerenciadas.all()
+    unidades_ids = unidades_jurisdicao.values_list('id', flat=True)
+
+    relatorios = RelatorioDMRMensal.objects.filter(
+        unidade_id__in=unidades_ids,
+        mes_referencia=mes_filtro,
+        ano_referencia=ano_filtro
+    ).select_related('unidade')
+
+    total_unidades = unidades_jurisdicao.count()
+    total_emitidos = relatorios.count()
+    unidades_com_visita = relatorios.filter(houve_visita=True).count()
+    
+    total_os_mes = OrdemServico.objects.filter(
+        unidade_id__in=unidades_ids,
+        data_prevista_atendimento__month=mes_filtro,
+        data_prevista_atendimento__year=ano_filtro
+    )
+    
+    os_concluidas = total_os_mes.filter(status=OrdemServico.StatusChoices.CONCLUIDO).count()
+    feedbacks_mes = FeedbackDMR.objects.filter(
+        unidade_id__in=unidades_ids,
+        criado_em__month=mes_filtro,
+        criado_em__year=ano_filtro
+    )
+
+    unidades_emitidas_ids = relatorios.values_list('unidade_id', flat=True)
+    unidades_pendentes = unidades_jurisdicao.exclude(id__in=unidades_emitidas_ids)
+
+    context = {
+        'mes_filtro': mes_filtro,
+        'ano_filtro': ano_filtro,
+        'relatorios': relatorios,
+        'unidades_pendentes': unidades_pendentes,
+        'total_unidades': total_unidades,
+        'total_emitidos': total_emitidos,
+        'unidades_com_visita': unidades_com_visita,
+        'total_os_count': total_os_mes.count(),
+        'os_concluidas': os_concluidas,
+        'feedbacks_count': feedbacks_mes.count(),
+        'user': user,
+        'hoje': hoje,
+    }
+
+    pdf = render_to_pdf('solicitacoes/pdf/imr_consolidado_pdf_template.html', context)
+    if pdf:
+        response = pdf
+        filename = f"IMR_Consolidado_Jurisdicao_{mes_filtro:02d}_{ano_filtro}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    messages.error(request, "Erro ao gerar o IMR Consolidado.")
+    return redirect('central_relatorios_dmr')

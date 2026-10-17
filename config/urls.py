@@ -27,12 +27,16 @@ urlpatterns = [
     path('os/<int:pk>/', solicitacoes_views.detalhar_os_view, name='detalhar_os'),
     path('os/<int:pk>/analisar/', solicitacoes_views.analisar_os_gestor_view, name='analisar_os'),
     path('cronograma/', solicitacoes_views.cronograma_visitas_view, name='cronograma_visitas'),
+    path('cronograma/pdf/', solicitacoes_views.exportar_grade_semanal_pdf_view, name='exportar_grade_semanal_pdf'),
     path('feedback/novo/', solicitacoes_views.criar_feedback_dmr_view, name='criar_feedback_dmr'),
     path('feedback/novo/<int:os_id>/', solicitacoes_views.criar_feedback_dmr_view, name='criar_feedback_dmr_os'),
     path('feedbacks/', solicitacoes_views.listar_feedbacks_dmr_view, name='listar_feedbacks_dmr'),
     path('dmr/mensal/', solicitacoes_views.criar_relatorio_dmr_mensal_view, name='criar_relatorio_dmr_mensal'),
     path('dmr/central/', solicitacoes_views.central_relatorios_dmr_view, name='central_relatorios_dmr'),
     path('dmr/<int:pk>/detalhes/', solicitacoes_views.detalhar_relatorio_dmr_view, name='detalhar_relatorio_dmr'),
+    path('dmr/<int:pk>/pdf/', solicitacoes_views.exportar_dmr_pdf_view, name='exportar_dmr_pdf'),
+    path('dmr/exportar-lote/', solicitacoes_views.exportar_dmrs_selecionados_pdf_view, name='exportar_dmrs_selecionados_pdf'),
+    path('dmr/imr-consolidado-pdf/', solicitacoes_views.exportar_imr_consolidado_jurisdicao_pdf_view, name='exportar_imr_consolidado_jurisdicao_pdf'),
 ]
 
 if settings.DEBUG:

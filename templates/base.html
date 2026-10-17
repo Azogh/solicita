@@ -113,11 +113,16 @@
                     </span>
                     {% if not user.is_authenticated %}
                     <div>
+                        <!-- Alternador Modo Claro / Escuro -->
+<button class="btn btn-link text-body-secondary p-2 me-2" id="theme-toggle" type="button" title="Alternar Modo Noturno">
+    <i class="fa-solid fa-moon fs-5" id="theme-icon"></i>
+</button>
                         <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm me-2">Entrar</a>
                         <a href="{% url 'registro' %}" class="btn btn-primary btn-sm">Cadastrar-se</a>
                     </div>
                     {% endif %}
                 </div>
+                
             </header>
 
             <!-- Mensagens Alerta -->
@@ -175,6 +180,46 @@
             }
         });
     </script>
+    <script>
+    // Gerenciador de Modo Noturno (Persistente no LocalStorage)
+    const getStoredTheme = () => localStorage.getItem('theme');
+    const setStoredTheme = theme => localStorage.setItem('theme', theme);
+
+    const getPreferredTheme = () => {
+        const storedTheme = getStoredTheme();
+        if (storedTheme) {
+            return storedTheme;
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+
+    const setTheme = theme => {
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        const icon = document.getElementById('theme-icon');
+        if (icon) {
+            if (theme === 'dark') {
+                icon.className = 'fa-solid fa-sun fs-5 text-warning';
+            } else {
+                icon.className = 'fa-solid fa-moon fs-5 text-secondary';
+            }
+        }
+    };
+
+    // Aplica o tema imediatamente ao carregar
+    setTheme(getPreferredTheme());
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggleBtn = document.getElementById('theme-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                setStoredTheme(newTheme);
+                setTheme(newTheme);
+            });
+        }
+    });
+</script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

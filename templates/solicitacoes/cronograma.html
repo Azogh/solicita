@@ -22,8 +22,11 @@
         <small class="text-muted">Planejamento semanal de atendimento às unidades da jurisdição</small>
     </div>
     <div class="d-flex gap-2">
+        <a href="{% url 'exportar_grade_semanal_pdf' %}" class="btn btn-primary fw-bold btn-print">
+            <i class="fa-solid fa-file-pdf me-1"></i>Baixar PDF
+        </a>
         <button onclick="window.print()" class="btn btn-outline-dark fw-bold btn-print">
-            <i class="fa-solid fa-print me-1"></i>Imprimir / Exportar Grade
+            <i class="fa-solid fa-print me-1"></i>Imprimir
         </button>
         <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-print">
             <i class="fa-solid fa-arrow-left me-1"></i>Voltar ao Dashboard

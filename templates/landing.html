@@ -3,60 +3,129 @@
 {% block title %}Solicita - Sistema de Gestão de Ordens de Serviço{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<div class="p-5 mb-4 bg-white rounded-3 shadow-sm border text-center">
-    <div class="container-fluid py-3">
-        <span class="badge bg-primary-subtle text-primary border border-primary-subtle mb-3 px-3 py-2 rounded-pill">
-            <i class="fa-solid fa-building-columns me-1"></i> Gestão Operacional & Terceirização
-        </span>
-        <h1 class="display-5 fw-bold text-dark">Sistema Solicita</h1>
-        <p class="col-md-8 fs-5 text-muted mx-auto">
-            Plataforma centralizada para abertura, acompanhamento e avaliação de Ordens de Serviço (OS) entre as unidades do órgão e a empresa prestadora de serviços.
+<style>
+    /* Estilos da Landing Page Minimalista */
+    .landing-wrapper {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 1rem 1rem 3rem 1rem;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        background-color: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+        padding: 0.35rem 0.85rem;
+        border-radius: 50rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 1.25rem;
+    }
+
+    .hero-title {
+        font-size: 2.75rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+    }
+
+    .hero-subtitle {
+        font-size: 1.1rem;
+        color: var(--bs-secondary-color);
+        max-width: 680px;
+        margin: 0 auto 2rem auto;
+    }
+
+    .feature-card {
+        border: 1px solid var(--bs-border-color);
+        background-color: var(--bs-body-bg);
+        border-radius: 12px;
+        padding: 1.75rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        height: 100%;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .feature-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background-color: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+</style>
+
+<div class="landing-wrapper">
+    <!-- Hero Section -->
+    <div class="text-center py-4 my-2">
+        <div class="hero-badge">
+            <i class="fa-solid fa-building-columns me-2"></i>Gestão Operacional & Terceirização
+        </div>
+        
+        <h1 class="hero-title mb-3">
+            Sistema <span class="text-primary">Solicita</span>
+        </h1>
+        
+        <p class="hero-subtitle">
+            Plataforma centralizada para abertura, acompanhamento e avaliação de Ordens de Serviço (OS) entre as unidades da jurisdição e a empresa prestadora de serviços.
         </p>
-        <div class="d-sm-flex justify-content-sm-center gap-3 mt-4">
-            <a href="{% url 'registro' %}" class="btn btn-primary btn-lg px-4 gap-3 fw-semibold">
+
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{% url 'registro' %}" class="btn btn-primary btn-lg fw-bold px-4 shadow-sm">
                 <i class="fa-solid fa-user-plus me-2"></i>Cadastrar Unidade / Solicitante
             </a>
-            <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-lg px-4">
+            <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-lg fw-bold px-4">
                 <i class="fa-solid fa-right-to-bracket me-2"></i>Já tenho acesso
             </a>
         </div>
     </div>
-</div>
 
-<!-- Recursos e Fluxo -->
-<div class="row g-4 py-3 row-cols-1 row-cols-md-3">
-    <div class="col">
-        <div class="card card-custom h-100 p-4 border-0 shadow-sm text-center">
-            <div class="fs-1 text-primary mb-3">
-                <i class="fa-solid fa-file-signature"></i>
+    <!-- Cards de Funcionalidades Principais -->
+    <div class="row g-4 my-4">
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i class="fa-solid fa-file-pen"></i>
+                </div>
+                <h5 class="fw-bold mb-2">1. Abertura do Chamado</h5>
+                <p class="text-muted small mb-0">
+                    O solicitante da unidade regista a demanda informando a necessidade, nível de prioridade e anexos fotográficos do local.
+                </p>
             </div>
-            <h4 class="fw-semibold">1. Abertura do Chamado</h4>
-            <p class="text-muted">
-                O servidor/responsável pela unidade registra a demanda informando a necessidade, prioridade e fotos do local.
-            </p>
         </div>
-    </div>
-    <div class="col">
-        <div class="card card-custom h-100 p-4 border-0 shadow-sm text-center">
-            <div class="fs-1 text-primary mb-3">
-                <i class="fa-solid fa-calendar-check"></i>
+
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <h5 class="fw-bold mb-2">2. Grade & Deslocamento</h5>
+                <p class="text-muted small mb-0">
+                    O Gestor Regional analisa as OSs da jurisdição, estabelece prioridades e notifica a data exata do atendimento do técnico.
+                </p>
             </div>
-            <h4 class="fw-semibold">2. Grade & Deslocamento</h4>
-            <p class="text-muted">
-                O Gestor Regional analisa as OSs da jurisdição, estabelece as prioridades e notifica a data exata do atendimento.
-            </p>
         </div>
-    </div>
-    <div class="col">
-        <div class="card card-custom h-100 p-4 border-0 shadow-sm text-center">
-            <div class="fs-1 text-primary mb-3">
-                <i class="fa-solid fa-square-poll-vertical"></i>
+
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                </div>
+                <h5 class="fw-bold mb-2">3. Encerramento & DMR</h5>
+                <p class="text-muted small mb-0">
+                    Após a conclusão do serviço, a unidade confirma a realização e gera a avaliação mensal formal de desempenho (DMR/IMR).
+                </p>
             </div>
-            <h4 class="fw-semibold">3. Encerramento & DMR</h4>
-            <p class="text-muted">
-                Após a conclusão do serviço, a unidade confirma o atendimento e registra a avaliação mensal de desempenho (DMR).
-            </p>
         </div>
     </div>
 </div>

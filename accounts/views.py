@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import login, update_session_auth_hash
@@ -6,9 +6,8 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from .forms import SolicitanteCadastroForm, PerfilEditarForm
-from .models import Unidade, Usuario, RegiaoFiscal
-from solicitacoes.models import OrdemServico
-
+from .models import Unidade, Usuario
+from solicitacoes.models import OrdemServico, RelatorioDMRMensal
 
 def landing_page_view(request):
     if request.user.is_authenticated:
@@ -49,7 +48,7 @@ def dashboard_view(request):
             unidade__in=unidades_gerenciadas
         ).order_by('-criado_em')
 
-        # Aplicar Filtros Rápido do Gestor
+        # Aplicar Filtros Rápidos do Gestor
         busca = request.GET.get('busca')
         status_filtro = request.GET.get('status')
 
@@ -75,7 +74,7 @@ def dashboard_view(request):
         }
         return render(request, 'dashboard_gestor.html', context)
 
-    # Rota para SOLICITANTE (Mostra todas as OSs da Unidade do usuário)
+    # Rota para SOLICITANTE
     else:
         if user.unidade:
             solicitacoes = OrdemServico.objects.filter(unidade=user.unidade).order_by('-criado_em')
@@ -114,11 +113,27 @@ def dashboard_view(request):
         ).count()
         total_concluidas = solicitacoes.filter(status=OrdemServico.StatusChoices.CONCLUIDO).count()
 
+        # Verificação do Alerta de DMR Mensal Pendente
+        hoje = date.today()
+        dmr_pendente_alerta = False
+        if user.unidade:
+            # Exibe alerta a partir do dia 20 do mês (ou se ainda não fez o do mês atual)
+            dmr_ja_enviado = RelatorioDMRMensal.objects.filter(
+                unidade=user.unidade,
+                mes_referencia=hoje.month,
+                ano_referencia=hoje.year
+            ).exists()
+            
+            if not dmr_ja_enviado and hoje.day >= 20:
+                dmr_pendente_alerta = True
+
         context = {
             'solicitacoes': solicitacoes,
             'total_rascunhos': total_rascunhos,
             'total_andamento': total_andamento,
             'total_concluidas': total_concluidas,
+            'dmr_pendente_alerta': dmr_pendente_alerta,
+            'mes_corrente_nome': hoje.strftime('%m/%Y'),
         }
         return render(request, 'dashboard_solicitante.html', context)
 

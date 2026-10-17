@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        .header h3 { margin: 0; color: #003366; font-size: 12pt; }
+        .header p { margin: 2px 0; font-size: 9pt; color: #666; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 6px;
+            font-size: 9pt;
+            text-align: left;
+        }
+        th {
+            background-color: #003366;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        
+        .section-title {
+            font-size: 11pt;
+            font-weight: bold;
+            color: #003366;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #003366;
+            padding-bottom: 3px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h3>RECEITA FEDERAL DO BRASIL</h3>
+        <p>PLANEJAMENTO E GRADE SEMANAL DE MANUTENÇÃO</p>
+        <p>Data de Emissão: {{ hoje|date:"d/m/Y" }}</p>
+    </div>
+
+    <div class="section-title">1. Resumo Semanal de Alocação de Visitas</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Data Prevista</th>
+                <th>Unidade</th>
+                <th style="text-align: center;">Demandas Agendadas</th>
+                <th style="text-align: center;">Nível Máximo de Urgência</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dia in dias_grade %}
+                {% if dia.total_os > 0 %}
+                    <tr>
+                        <td><strong>{{ dia.data|date:"d/m/Y" }}</strong> ({{ dia.dia_semana }})</td>
+                        <td>{{ user.unidade.sigla|default:"IRF/SBJ" }}</td>
+                        <td style="text-align: center;">{{ dia.total_os }} OS(s)</td>
+                        <td style="text-align: center;">{{ dia.prioridade_maxima }}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="section-title">2. Descrição das Demandas por Visita</div>
+    {% for dia in dias_grade %}
+        {% if dia.total_os > 0 %}
+            <div style="margin-bottom: 10px; padding: 6px; background-color: #f9f9f9; border: 1px solid #eee;">
+                <strong style="color: #003366;">{{ dia.data|date:"d/m/Y" }} / {{ user.unidade.sigla|default:"IRF/SBJ" }} — Responsável: Cristian</strong>
+                <ul style="margin: 5px 0 0 15px; padding: 0;">
+                    {% for os in dia.os_list %}
+                        <li style="margin-bottom: 3px;">
+                            <strong>[{{ os.numero_os }}] {{ os.assunto }}:</strong> {{ os.descricao }}
+                            <em>({{ os.get_prioridade_display }})</em>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endfor %}
+
+</body>
+</html>

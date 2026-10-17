@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 1.2cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            color: #222;
+            line-height: 1.3;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+        }
+        .header h3 { margin: 0; font-size: 12pt; color: #003366; }
+        .header p { margin: 2px 0; font-size: 9pt; color: #555; }
+        
+        .kpi-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        .kpi-card {
+            background-color: #f4f6f9;
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+            width: 25%;
+        }
+        .kpi-title { font-size: 8pt; font-weight: bold; color: #555; text-transform: uppercase; }
+        .kpi-value { font-size: 14pt; font-weight: bold; color: #003366; margin-top: 2px; }
+
+        .section-title {
+            font-size: 10.5pt;
+            font-weight: bold;
+            color: #003366;
+            border-bottom: 1px solid #003366;
+            padding-bottom: 3px;
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+        }
+        table.data-table th, table.data-table td {
+            border: 1px solid #ccc;
+            padding: 5px 7px;
+            font-size: 8.5pt;
+            text-align: left;
+        }
+        table.data-table th {
+            background-color: #003366;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .signatures {
+            margin-top: 35px;
+            width: 100%;
+        }
+        .signature-cell {
+            width: 48%;
+            display: inline-block;
+            text-align: center;
+            font-size: 8.5pt;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h3>RECEITA FEDERAL DO BRASIL</h3>
+        <p>SUPERINTENDÊNCIA REGIONAL DA RECEITA FEDERAL — FISCALIZAÇÃO REGIONAL DE CONTRATOS</p>
+        <p style="font-weight: bold; font-size: 11pt; color: #000; margin-top: 4px;">
+            RELATÓRIO CONSOLIDADO DO IMR / MANUTENÇÃO — PERÍODO {{ mes_filtro|stringformat:"02d" }}/{{ ano_filtro }}
+        </p>
+    </div>
+
+    <!-- Tabela de KPIs -->
+    <table class="kpi-table">
+        <tr>
+            <td class="kpi-card">
+                <div class="kpi-title">Unidades na Jurisdição</div>
+                <div class="kpi-value">{{ total_unidades }}</div>
+            </td>
+            <td class="kpi-card">
+                <div class="kpi-title">DMRs Emitidos</div>
+                <div class="kpi-value">{{ total_emitidos }} / {{ total_unidades }}</div>
+            </td>
+            <td class="kpi-card">
+                <div class="kpi-title">Visitas Realizadas</div>
+                <div class="kpi-value">{{ unidades_com_visita }}</div>
+            </td>
+            <td class="kpi-card">
+                <div class="kpi-title">OSs Atendidas no Mês</div>
+                <div class="kpi-value">{{ os_concluidas }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="section-title">1. Resumo da Emissão dos Relatórios DMR por Unidade</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Unidade</th>
+                <th>Status Emissão</th>
+                <th>Data Visita</th>
+                <th>Equipamento Fora Uso?</th>
+                <th>Ressalvas Registradas</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in relatorios %}
+                <tr>
+                    <td><strong>{{ r.unidade.sigla }}</strong> — {{ r.unidade.nome }}</td>
+                    <td style="color: green; font-weight: bold;">Enviado ({{ r.criado_em|date:"d/m/Y" }})</td>
+                    <td>{{ r.data_visita|date:"d/m/Y"|default:"Sem Visita" }}</td>
+                    <td>{{ r.get_equipamento_fora_uso_display }}</td>
+                    <td>{{ r.outras_observacoes|default:"Sem ressalvas" }}</td>
+                </tr>
+            {% endfor %}
+            {% for u in unidades_pendentes %}
+                <tr>
+                    <td><strong>{{ u.sigla }}</strong> — {{ u.nome }}</td>
+                    <td style="color: red; font-weight: bold;">PENDENTE DE ENVIO</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>Unidade ainda não emitiu o DMR do mês.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="section-title">2. Apontamentos da Fiscalização / Ocorrências de Qualidade</div>
+    <p style="font-size: 8.5pt; color: #444; margin-bottom: 10px;">
+        Os dados individuais e feedbacks pormenorizados de cada unidade estão arquivados eletronicamente no sistema Solicita e podem ser consultados individualmente a qualquer tempo.
+    </p>
+
+    <div class="signatures">
+        <div class="signature-cell">
+            __________________________________________<br>
+            <strong>{{ user.get_full_name|default:user.username }}</strong><br>
+            Gestor / Fiscal Regional do Contrato
+        </div>
+        <div class="signature-cell" style="float: right;">
+            __________________________________________<br>
+            <strong>Comissão de Fiscalização / RFB</strong><br>
+            Aprovação e Encaminhamento ao Pagamento
+        </div>
+    </div>
+
+</body>
+</html>
