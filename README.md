@@ -3,7 +3,7 @@
 ![Django](https://img.shields.io/badge/Django-5.2.18-092E20?style=for-the-badge&logo=django&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.15-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
-![Version](https://img.shields.io/badge/Version-v1.0.0-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v1.1.0-blue?style=for-the-badge)
 
 O **Solicita** é uma plataforma centralizada desenvolvida para gerenciamento, acompanhamento e fiscalização de Ordens de Serviço (OS) de manutenção predial e apoio logístico no âmbito da Receita Federal do Brasil, integrando a comunicação entre as unidades solicitantes e os gestores regionais de contrato.
 
