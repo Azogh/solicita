@@ -47,6 +47,31 @@ O **Solicita** é uma plataforma centralizada desenvolvida para gerenciamento, a
 - Git
 
 ### Passo a Passo
+---
+
+### Opção 1: Execução Direta via Pacote Docker (Recomendado)
+
+Você pode rodar a versão pré-compilada em container diretamente do **GitHub Container Registry**, sem a necessidade de clonar o código-fonte ou instalar dependências locais.
+
+```bash
+# Executa o pacote publicado na versão v1.1.0
+docker run -d -p 8000:8000 ghcr.io/azogh/solicita:v1.1.0
+Opção 1: Execução Nativa (Sem Docker)
+```
+---
+
+### Opção 2: Execução com Docker Compose (Desenvolvimento Local)
+   ```bash
+      # 1. Clonar o repositório
+         git clone [https://github.com/Azogh/solicita.git](https://github.com/Azogh/solicita.git)
+         cd solicita
+
+      # 2. Subir o ambiente containerizado
+         docker compose up -d --build
+   ```
+---
+
+### Opção 3: Execução Nativa (Sem Docker)
 
 1. **Clonar o Repositório:**
    ```bash
@@ -69,6 +94,9 @@ O **Solicita** é uma plataforma centralizada desenvolvida para gerenciamento, a
 6. **Iniciar o Servidor de Desenvolvimento:**
    ```bash
    python manage.py runserver
+
+
+---
 
 ## 🧪 Testes Automatizados
 O projeto conta com testes de integração cobrindo fluxos de permissão e criação de solicitações. Para executar a suíte de testes:
