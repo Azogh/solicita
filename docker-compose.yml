@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: solicita_app
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mapeia o banco SQLite e a pasta de mídia para persistência de dados local
+      - .:/app
+      - solicita_db:/app/data
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=sua_secret_key_aqui
+    restart: always
+
+volumes:
+  solicita_db:
