@@ -80,6 +80,10 @@ O projeto conta com testes de integração cobrindo fluxos de permissão e cria�
 
 ## 🏷️ Versionamento e Releases
 
+- **`v1.1.0` (Release Oficial):**
+  - Adicionada arquitetura de containerização completa com Dockerfile e Docker Compose.
+  - Suporte a persistência de volumes locais para banco de dados e arquivos de mídia.
+  -  Atualização e congelamento da lista de dependências no `requirements.txt`.
 - **`v1.0.0` (Release Oficial):**
   - Implementação completa do workflow de Ordens de Serviço (OS).
   - Grade semanal de visitas com exportação nativa em PDF.
